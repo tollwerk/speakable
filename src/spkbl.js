@@ -25,24 +25,9 @@
         }
     };
 
+
     let voices = [];
-    const speechUtterance = new SpeechSynthesisUtterance();
-
-    // function isPreferredVoice(voice) {
-    //     return ["Google US English", "Microsoft Jessa Online"].any(preferredVoice =>
-    //         voice.name.startsWith(preferredVoice)
-    //     );
-    // }
-
-    speechSynthesis.addEventListener('voiceschanged', () => {
-        voices = speechSynthesis.getVoices();
-        // speechUtterance.voice = voices.find(isPreferredVoice);
-        speechUtterance.voice = voices.find(v => true);
-        speechUtterance.lang = "de-DE";
-        speechUtterance.volume = 1;
-        speechUtterance.pitch = 1;
-        speechUtterance.rate = 1;
-    });
+    let speechUtterance = null;
 
     // Sentence splitting
     const initSplit = /(\S.+?[.!?\u203D\u2E18\u203C\u2047-\u2049])(?=\s+|$)/g;
@@ -198,7 +183,9 @@
     function Speakable(element, options) {
         this.element = element;
         this.options = options;
-        this.text = this.element.textContent;
+        this._text = (this.element.textContent || '').trim();
+        this._length = this._text.length;
+        this._progress = 0;
         this._player = null;
         this._controls = {};
         this._buildPlayer();
@@ -242,6 +229,7 @@
         this._controls.progress.className = 'spkbl-ctrl spkbl-ctrl--progress';
         this._controls.progress.addEventListener('change', this.progress.bind(this));
         this._controls.progress.setAttribute('aria-label', l18n.ctrl.progress);
+        this._controls.progress.setAttribute('readonly', 'true');
         this._player.appendChild(this._controls.progress);
 
         // Stop button
@@ -264,11 +252,22 @@
         this._controls.pause.focus();
 
         speechSynthesis.cancel();
-        speechUtterance.text = this.text;
+        speechUtterance.text = this._text;
         speechUtterance.onend = this.stop.bind(this);
         // speechUtterance.onboundary = e => console.log(e);
-        speechUtterance.onboundary = e => console.log(e.name, this.text.substr(e.charIndex, e.charLength));
+        speechUtterance.onboundary = this.boundary.bind(this);
         speechSynthesis.speak(speechUtterance);
+    }
+
+    /**
+     * Boundary handler
+     *
+     * @param {SpeechSynthesisEvent} e Event
+     */
+    Speakable.prototype.boundary = function (e) {
+        this._progress = Math.round(100 * e.charIndex / this._length);
+        this._controls.progress.value = this._progress;
+        console.log(this._progress, e.name, this._text.substr(e.charIndex, e.charLength));
     }
 
     /**
@@ -277,8 +276,17 @@
      * @param {Event} e Event
      */
     Speakable.prototype.pause = function (e) {
-        speechSynthesis.pause();
-        speechSynthesis.resume();
+        if (speechSynthesis.speaking) {
+            if (speechSynthesis.paused) {
+                speechSynthesis.resume();
+                this._player.classList.remove('spkbl-player--paused');
+                this._controls.pause.setAttribute('aria-pressed', 'false');
+            } else {
+                speechSynthesis.pause();
+                this._player.classList.add('spkbl-player--paused');
+                this._controls.pause.setAttribute('aria-pressed', 'true');
+            }
+        }
     }
 
     /**
@@ -298,6 +306,7 @@
     Speakable.prototype.stop = function (e) {
         this._player.classList.add('spkbl-player--inactive');
         this._player.classList.remove('spkbl-player--active');
+        this._player.classList.remove('spkbl-player--paused');
         this._controls.play.focus();
 
         speechSynthesis.cancel();
@@ -333,9 +342,32 @@
      * @returns {Array} Speakables
      */
     Speakable.init = function (options = {}) {
-        const opts = Object.assign(defaultOptions, options);
-        const selector = opts.selector || '';
-        return selector.length ? Array.from(d.querySelectorAll(selector)).map(s => new Speakable(s, opts)) : [];
+        // If the Web Speech API is supported
+        if ('SpeechSynthesisUtterance' in w) {
+            speechUtterance = new SpeechSynthesisUtterance();
+
+            // function isPreferredVoice(voice) {
+            //     return ["Google US English", "Microsoft Jessa Online"].any(preferredVoice =>
+            //         voice.name.startsWith(preferredVoice)
+            //     );
+            // }
+
+            speechSynthesis.addEventListener('voiceschanged', () => {
+                voices = speechSynthesis.getVoices();
+                // speechUtterance.voice = voices.find(isPreferredVoice);
+                speechUtterance.voice = voices.find(v => true);
+                speechUtterance.lang = "de-DE";
+                speechUtterance.volume = 1;
+                speechUtterance.pitch = 1;
+                speechUtterance.rate = 1;
+            });
+
+            const opts = Object.assign(defaultOptions, options);
+            const selector = opts.selector || '';
+            return selector.length ? Array.from(d.querySelectorAll(selector)).map(s => new Speakable(s, opts)) : [];
+        }
+
+        return [];
     }
 
     if (typeof exports !== 'undefined') {
