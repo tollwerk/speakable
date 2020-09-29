@@ -1,0 +1,28 @@
+{
+  "name": "speakable",
+  "version": "1.0.0",
+  "description": "Web Speech API player",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tollwerk/speakable.git"
+  },
+  "author": "Joschi Kuphal <joschi@tollwerk.de>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tollwerk/speakable/issues"
+  },
+  "homepage": "https://github.com/tollwerk/speakable#readme",
+  "dependencies": {
+    "wink-tokenizer": "^5.2.3"
+  },
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "gulp-uglify": "^3.0.2",
+    "typescript": "^4.0.3"
+  }
+}

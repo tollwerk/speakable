@@ -1,0 +1,4 @@
+/.idea/*
+!/.idea/fileTemplates
+/node_modules
+npm-debug.log

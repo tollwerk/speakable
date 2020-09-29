@@ -1,0 +1,40 @@
+# Path-based git attributes
+# https://www.kernel.org/pub/software/scm/git/docs/gitattributes.html
+# Auto detect text files and perform LF normalization
+* text eol=lf
+
+# (binary is a macro for -text -diff)
+*.br binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.gz binary
+*.ico binary
+*.mov binary
+*.mp4 binary
+*.mp3 binary
+*.flv binary
+*.fla binary
+*.swf binary
+*.gz binary
+*.zip binary
+*.7z binary
+*.ttf binary
+*.eot binary
+*.woff binary
+*.pyc binary
+*.pdf binary
+
+# Ignore all test and documentation with "export-ignore".
+/.editorconfig export-ignore
+/.env.example export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.gitlab-ci.yml export-ignore
+/docker-compose.yml export-ignore
+/Envoy.blade.php export-ignore
+/phpcs.xml export-ignore
+/phpmd.xml export-ignore
+/phpunit.xml export-ignore
+/README.adoc export-ignore

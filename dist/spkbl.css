@@ -1,0 +1,8 @@
+.spkbl-player {
+
+}
+
+.spkbl-player--inactive .spkbl-ctrl:not(.spkbl-ctrl--play),
+.spkbl-player--active .spkbl-ctrl--play {
+    display: none;
+}
