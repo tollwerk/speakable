@@ -183,6 +183,8 @@
     function Speakable(element, options) {
         this.element = element;
         this.options = options;
+        this._baseLanguage = this._determineLanguage(this.element);
+        this._utterances = [];
         this._text = (this.element.textContent || '').trim();
         this._length = this._text.length;
         this._progress = 0;
@@ -190,6 +192,17 @@
         this._controls = {};
         this._buildPlayer();
         this._injectPlayer();
+    }
+
+    /**
+     * Determine element language
+     *
+     * @param {Element} element Element
+     * @private
+     */
+    Speakable.prototype._determineLanguage = function (element) {
+        const lang = element.lang;
+        return lang || (element.parentNode ? this._determineLanguage(element.parentNode) : null);
     }
 
     /**
@@ -220,16 +233,14 @@
         this._player.appendChild(this._controls.pause);
 
         // Scrubber
-        this._controls.progress = d.createElement('input');
-        this._controls.progress.type = 'range';
+        this._controls.progress = d.createElement('progress');
         this._controls.progress.className = 'spkbl-ctrl spkbl-ctrl--progress';
-        this._controls.progress.min = '0';
         this._controls.progress.max = '100';
         this._controls.progress.value = '0';
-        this._controls.progress.className = 'spkbl-ctrl spkbl-ctrl--progress';
-        this._controls.progress.addEventListener('change', this.progress.bind(this));
         this._controls.progress.setAttribute('aria-label', l18n.ctrl.progress);
+        this._controls.progress.setAttribute('aria-hidden', 'true');
         this._controls.progress.setAttribute('readonly', 'true');
+        this._controls.progress.appendChild(d.createTextNode('0%'));
         this._player.appendChild(this._controls.progress);
 
         // Stop button
@@ -267,6 +278,7 @@
     Speakable.prototype.boundary = function (e) {
         this._progress = Math.round(100 * e.charIndex / this._length);
         this._controls.progress.value = this._progress;
+        this._controls.progress.textContent = `${this._progress}%`;
         console.log(this._progress, e.name, this._text.substr(e.charIndex, e.charLength));
     }
 
@@ -287,15 +299,6 @@
                 this._controls.pause.setAttribute('aria-pressed', 'true');
             }
         }
-    }
-
-    /**
-     * Scrub / progress
-     *
-     * @param {Event} e Event
-     */
-    Speakable.prototype.progress = function (e) {
-
     }
 
     /**
