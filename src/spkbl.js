@@ -25,6 +25,223 @@
         }
     };
 
+    /**
+     * Block level elements
+     *
+     * @type {string[]}
+     */
+    const blockLevelElements = ['address', 'article', 'aside', 'blockquote', 'details', 'dialog', 'dd', 'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'li', 'main', 'nav', 'ol', 'p', 'pre', 'section', 'table', 'ul'];
+
+    /**
+     * Abstract syntax tree parser
+     *
+     * @param {String} language Language
+     *
+     * @constructor
+     */
+    function AstParser(language) {
+        this.lang = language;
+        this.items = [];
+    }
+
+    /**
+     * Parse an element
+     *
+     * @param {Element} element Element
+     *
+     * @returns {[]} Items
+     */
+    AstParser.prototype.parse = function (element) {
+        let store = null;
+        element.childNodes.forEach(c => {
+            if (c.nodeType === Element.ELEMENT_NODE) {
+                const lang = c.lang || this.lang;
+                this.items.push({
+                    type: 1 + this._isBlockLevelElement(c),
+                    lang: lang,
+                    node: c,
+                    items: (new AstParser(lang)).parse(c),
+                });
+            } else if (c.nodeType === Element.TEXT_NODE) {
+                const text = c.nodeValue.trim();
+                if (text.length) {
+                    this.items.push({
+                        type: 0,
+                        lang: this.lang,
+                        node: c,
+                        text
+                    });
+                }
+            }
+        });
+        return this.items;
+    }
+
+    /**
+     * Test whether an element is a block level element
+     *
+     * @param {Element} element element
+     *
+     * @returns {boolean} Is block level element
+     */
+    AstParser.prototype._isBlockLevelElement = function (element) {
+        return blockLevelElements.indexOf(element.tagName.toLowerCase()) !== -1;
+    }
+
+    /**
+     * Chunk the parsed items
+     *
+     * @returns {Array} Chunked items
+     */
+    AstParser.prototype.chunked = function () {
+        const chunks = [];
+        let sentence = null;
+        const chunksRecursive = c => {
+            if (sentence === null) {
+                if (c.type) {
+                    sentence = { lang: c.lang, chunks: [] };
+                    c.items.forEach(chunksRecursive);
+                    chunks.push(sentence);
+                    sentence = null;
+                } else {
+                    sentence = { lang: c.lang, chunks: [{ node: c.node, text: c.text }] };
+                }
+            } else {
+                switch (c.type) {
+                    case 2:
+                        if (sentence.chunks.length) {
+                            chunks.push(sentence);
+                            sentence = { lang: c.lang, chunks: [] };
+                        } else {
+                            sentence.lang = c.lang;
+                        }
+                        c.items.forEach(chunksRecursive);
+                        if (sentence.chunks.length) {
+                            chunks.push(sentence);
+                        }
+                        sentence = null;
+                        break;
+                    case 1:
+                        if (c.lang === sentence.lang) {
+                            c.items.forEach(chunksRecursive);
+                        } else {
+                            const lang = sentence.lang;
+                            if (sentence.chunks.length) {
+                                chunks.push(sentence);
+                            }
+                            sentence = { lang: c.lang, chunks: [] };
+                            c.items.forEach(chunksRecursive);
+                            if (sentence.chunks.length) {
+                                chunks.push(sentence);
+                            }
+                            sentence = { lang, chunks: [] };
+                        }
+                        break;
+                    default:
+                        sentence.chunks.push({ node: c.node, text: c.text });
+                }
+            }
+        }
+        this.items.forEach(chunksRecursive);
+        if (sentence && sentence.chunks.length) {
+            chunks.push(sentence);
+        }
+        if (chunks.length) {
+            const consolidated = [chunks.shift()];
+            do {
+                const chunk = chunks.shift();
+                const last = consolidated.length - 1;
+                if (chunk.lang === consolidated[last].lang) {
+                    Array.prototype.push.apply(consolidated[last].chunks, chunk.chunks);
+                } else {
+                    consolidated.push(chunk);
+                }
+            } while (chunks.length);
+            consolidated.forEach(c => {
+                let char = 0;
+                c.chunks.forEach(chunk => {
+                    chunk.char = char;
+                    char += chunk.text.length + 1;
+                });
+            });
+            return consolidated;
+        }
+        return [];
+    }
+
+    /**
+     * Utterance
+     *
+     * @param {String} language Language
+     *
+     * @constructor
+     */
+    function Utterance(language) {
+        this.language = language;
+        this.sentences = [];
+        this._currentSentence = null;
+    }
+
+    /**
+     * Return the current sentence
+     *
+     * @returns {Sentence} Sentence
+     */
+    Utterance.prototype.currentSentence = function () {
+        return this._currentSentence || this.addSentence();
+    }
+
+    /**
+     * Create and return a new sentence
+     *
+     * @returns {Sentence} Sentence
+     */
+    Utterance.prototype.addSentence = function () {
+        this._currentSentence = new Sentence(this);
+        this.sentences.push(this._currentSentence);
+        return this._currentSentence;
+    }
+
+    /**
+     * Add a word
+     *
+     * @param {String} word Word
+     */
+    Utterance.prototype.addWord = function (word) {
+        this.currentSentence().addWord(word);
+    }
+
+    /**
+     * Sentence
+     *
+     * @param {Utterance} utterance Utterance
+     *
+     * @constructor
+     */
+    function Sentence(utterance) {
+        this.utterance = utterance;
+        this.words = [];
+    }
+
+    /**
+     * Add a word
+     *
+     * @param {String} word Word
+     */
+    Sentence.prototype.addWord = function (word) {
+        this.words.push(new Word(word));
+    }
+
+    /**
+     * Word
+     *
+     * @param {String} text Text
+     *
+     * @constructor
+     */
+    function Word(text) {
+        this.text = text;
+    }
 
     let voices = [];
     let speechUtterance = null;
@@ -183,10 +400,14 @@
     function Speakable(element, options) {
         this.element = element;
         this.options = options;
-        this._baseLanguage = this._determineLanguage(this.element);
-        this._utterances = [];
-        this._text = (this.element.textContent || '').trim();
-        this._length = this._text.length;
+
+        // Parse the element contents
+        const astParser = new AstParser(this._determineLanguage(this.element) || 'en');
+        astParser.parse(this.element);
+        this._utterances = astParser.chunked();
+        this._currentUtterance = 0;
+        this._length = 0;
+        this._offset = 0;
         this._progress = 0;
         this._player = null;
         this._controls = {};
@@ -198,6 +419,7 @@
      * Determine element language
      *
      * @param {Element} element Element
+     *
      * @private
      */
     Speakable.prototype._determineLanguage = function (element) {
@@ -261,13 +483,37 @@
         this._player.classList.add('spkbl-player--active');
         this._player.classList.remove('spkbl-player--inactive');
         this._controls.pause.focus();
+        this._length = -1;
+        this._offset = 0;
+        this._progress = 0;
 
         speechSynthesis.cancel();
-        speechUtterance.text = this._text;
-        speechUtterance.onend = this.stop.bind(this);
-        // speechUtterance.onboundary = e => console.log(e);
         speechUtterance.onboundary = this.boundary.bind(this);
-        speechSynthesis.speak(speechUtterance);
+        speechUtterance.onend = this.next.bind(this);
+        this._utterances.forEach(u => {
+            u.voice = voices.find(v => (v.lang === u.lang) || v.lang.startsWith(u.lang + '-'))
+                || voices.find(v => v.default)
+                || voices[0];
+            u.length = u.chunks.map(c => c.text).join(' ').length;
+            this._length += u.length + 1;
+        });
+        this._currentUtterance = -1;
+        this.next();
+    }
+
+    Speakable.prototype.next = function (e) {
+        if (this._utterances.length > (this._currentUtterance + 1)) {
+            if (this._currentUtterance >= 0) {
+                this._offset += this._utterances[this._currentUtterance].length + 1;
+            }
+            ++this._currentUtterance;
+            const utterance = this._utterances[this._currentUtterance];
+            speechUtterance.text = utterance.chunks.map(c => c.text).join(' ');
+            speechUtterance.voice = utterance.voice;
+            speechSynthesis.speak(speechUtterance);
+        } else {
+            this.stop(e);
+        }
     }
 
     /**
@@ -276,10 +522,10 @@
      * @param {SpeechSynthesisEvent} e Event
      */
     Speakable.prototype.boundary = function (e) {
-        this._progress = Math.round(100 * e.charIndex / this._length);
+        this._progress = Math.round(100 * (this._offset + e.charIndex) / this._length);
         this._controls.progress.value = this._progress;
         this._controls.progress.textContent = `${this._progress}%`;
-        console.log(this._progress, e.name, this._text.substr(e.charIndex, e.charLength));
+        console.log(this._progress, e.name, speechUtterance.text.substr(e.charIndex, e.charLength));
     }
 
     /**
@@ -348,21 +594,12 @@
         // If the Web Speech API is supported
         if ('SpeechSynthesisUtterance' in w) {
             speechUtterance = new SpeechSynthesisUtterance();
-
-            // function isPreferredVoice(voice) {
-            //     return ["Google US English", "Microsoft Jessa Online"].any(preferredVoice =>
-            //         voice.name.startsWith(preferredVoice)
-            //     );
-            // }
-
+            speechUtterance.volume = 1;
+            speechUtterance.pitch = 1;
+            speechUtterance.rate = 1;
+            voices = speechSynthesis.getVoices();
             speechSynthesis.addEventListener('voiceschanged', () => {
                 voices = speechSynthesis.getVoices();
-                // speechUtterance.voice = voices.find(isPreferredVoice);
-                speechUtterance.voice = voices.find(v => true);
-                speechUtterance.lang = "de-DE";
-                speechUtterance.volume = 1;
-                speechUtterance.pitch = 1;
-                speechUtterance.rate = 1;
             });
 
             const opts = Object.assign(defaultOptions, options);
