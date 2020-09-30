@@ -1,8 +1,37 @@
 .spkbl-player {
+    & > * {
+        background-color: #eee;
+        vertical-align: middle;
+        border: 1px solid #000;
+        height: 1.6rem;
 
+        &:focus {
+            outline: 2px solid #000;
+        }
+    }
 }
 
 .spkbl-player--inactive .spkbl-ctrl:not(.spkbl-ctrl--play),
 .spkbl-player--active .spkbl-ctrl--play {
     display: none;
+}
+
+.spkbl-ctrl--progress {
+    width: 5em;
+    appearance: none;
+    border-left: none;
+    border-right: none;
+    box-sizing: border-box;
+    position: relative;
+    z-index: -1;
+    padding: 2px;
+
+    &::-webkit-progress-bar {
+        background-color: #919191;
+    }
+
+    &::-moz-progress-bar,
+    &::-webkit-progress-value {
+        background-color: #000;
+    }
 }

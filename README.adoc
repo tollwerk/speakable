@@ -7,6 +7,7 @@
 ** https://observablehq.com/@spencermountain/compromise-tokenization
 ** https://github.com/NaturalNode/natural
 ** https://github.com/winkjs/wink-tokenizer
+** https://github.com/winkjs/wink-tokenizer/blob/master/src/wink-tokenizer.js
 ** https://www.quora.com/Are-there-any-JavaScript-natural-language-processing-projects
 ** Anhand welcher Kriterien?
 * Markieren mit extra HTML-Elementen, die neutral sind. ReadSpeaker nimmt Elemente in einem eigenen (undeklarierten?) Namensraum `<rs:span>`, die jeweils eine ID und CSS-Klassen haben, wenn Sie hervorgehoben werden sollen (beim Lesen).

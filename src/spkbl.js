@@ -8,7 +8,8 @@
      */
     const defaultOptions = {
         selector: '.spkbl',
-        insert: 'before'
+        insert: 'before',
+        multivoice: true
     }
 
     /**
@@ -36,11 +37,13 @@
      * Abstract syntax tree parser
      *
      * @param {String} language Language
+     * @param {Boolean} multivoice Multiple voices
      *
      * @constructor
      */
-    function AstParser(language) {
+    function AstParser(language, multivoice) {
         this.lang = language;
+        this.multivoice = multivoice;
         this.items = [];
     }
 
@@ -51,19 +54,19 @@
      *
      * @returns {[]} Items
      */
-    AstParser.prototype.parse = function (element) {
+    AstParser.prototype._parse = function (element) {
         let store = null;
         element.childNodes.forEach(c => {
             if (c.nodeType === Element.ELEMENT_NODE) {
-                const lang = c.lang || this.lang;
+                const lang = this.multivoice ? (c.lang || this.lang) : this.lang;
                 this.items.push({
                     type: 1 + this._isBlockLevelElement(c),
                     lang: lang,
                     node: c,
-                    items: (new AstParser(lang)).parse(c),
+                    items: (new AstParser(lang, this.multivoice))._parse(c),
                 });
             } else if (c.nodeType === Element.TEXT_NODE) {
-                const text = c.nodeValue.trim();
+                const text = c.nodeValue.trim().replace(/[\s\r\n]+/g, ' ');
                 if (text.length) {
                     this.items.push({
                         type: 0,
@@ -91,9 +94,11 @@
     /**
      * Chunk the parsed items
      *
+     * @param {Element} element Element
+     *
      * @returns {Array} Chunked items
      */
-    AstParser.prototype.chunked = function () {
+    AstParser.prototype.chunked = function (element) {
         const chunks = [];
         let sentence = null;
         const chunksRecursive = c => {
@@ -142,7 +147,7 @@
                 }
             }
         }
-        this.items.forEach(chunksRecursive);
+        this._parse(element).forEach(chunksRecursive);
         if (sentence && sentence.chunks.length) {
             chunks.push(sentence);
         }
@@ -161,6 +166,9 @@
                 let char = 0;
                 c.chunks.forEach(chunk => {
                     chunk.char = char;
+                    if (!punctuation.test(chunk.text.substr(-1))) {
+                        chunk.text += '.';
+                    }
                     char += chunk.text.length + 1;
                 });
             });
@@ -170,79 +178,10 @@
     }
 
     /**
-     * Utterance
+     * Speech Synthesis Voices
      *
-     * @param {String} language Language
-     *
-     * @constructor
+     * @type {*[SpeechSynthesisVoice]}
      */
-    function Utterance(language) {
-        this.language = language;
-        this.sentences = [];
-        this._currentSentence = null;
-    }
-
-    /**
-     * Return the current sentence
-     *
-     * @returns {Sentence} Sentence
-     */
-    Utterance.prototype.currentSentence = function () {
-        return this._currentSentence || this.addSentence();
-    }
-
-    /**
-     * Create and return a new sentence
-     *
-     * @returns {Sentence} Sentence
-     */
-    Utterance.prototype.addSentence = function () {
-        this._currentSentence = new Sentence(this);
-        this.sentences.push(this._currentSentence);
-        return this._currentSentence;
-    }
-
-    /**
-     * Add a word
-     *
-     * @param {String} word Word
-     */
-    Utterance.prototype.addWord = function (word) {
-        this.currentSentence().addWord(word);
-    }
-
-    /**
-     * Sentence
-     *
-     * @param {Utterance} utterance Utterance
-     *
-     * @constructor
-     */
-    function Sentence(utterance) {
-        this.utterance = utterance;
-        this.words = [];
-    }
-
-    /**
-     * Add a word
-     *
-     * @param {String} word Word
-     */
-    Sentence.prototype.addWord = function (word) {
-        this.words.push(new Word(word));
-    }
-
-    /**
-     * Word
-     *
-     * @param {String} text Text
-     *
-     * @constructor
-     */
-    function Word(text) {
-        this.text = text;
-    }
-
     let voices = [];
     let speechUtterance = null;
 
@@ -254,6 +193,7 @@
     const newLine = /((?:\r?\n|\r)+)/; // Match different new-line formats
     const hasLetter = /[a-z0-9\u00C0-\u00FF\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]/i;
     const startWhitespace = /^\s+/;
+    const punctuation = /[’'‘’`“”"\[\]\(\){}…,\.!;\?\-:\u0964\u0965]/;
 
     /**
      * Naiive splitting
@@ -400,11 +340,7 @@
     function Speakable(element, options) {
         this.element = element;
         this.options = options;
-
-        // Parse the element contents
-        const astParser = new AstParser(this._determineLanguage(this.element) || 'en');
-        astParser.parse(this.element);
-        this._utterances = astParser.chunked();
+        this._utterances = [];
         this._currentUtterance = 0;
         this._length = 0;
         this._offset = 0;
@@ -413,6 +349,10 @@
         this._controls = {};
         this._buildPlayer();
         this._injectPlayer();
+
+        // Parse the element contents
+        const astParser = new AstParser(this._determineLanguage(this.element) || 'en', this.options.multivoice);
+        this._setUtterances(astParser.chunked(this.element));
     }
 
     /**
@@ -477,43 +417,76 @@
     /**
      * Start playing
      *
-     * @param {Event} e Event
+     * @param {Array} utterances Utterances
+     */
+    Speakable.prototype._setUtterances = function (utterances) {
+        this._length = 0;
+        this._utterances = utterances.map(u => {
+            u.text = u.chunks.map(c => c.text).join(' ');
+            u.length = u.text.length;
+            this._length += u.length + 1;
+            return u;
+        });
+        console.table(this._utterances);
+        --this._length;
+    }
+
+    /**
+     * Start playing
+     *
+     * @param {SpeechSynthesisEvent} e Event
      */
     Speakable.prototype.play = function (e) {
         this._player.classList.add('spkbl-player--active');
         this._player.classList.remove('spkbl-player--inactive');
         this._controls.pause.focus();
-        this._length = -1;
+
+        this._currentUtterance = -1;
         this._offset = 0;
         this._progress = 0;
 
         speechSynthesis.cancel();
         speechUtterance.onboundary = this.boundary.bind(this);
         speechUtterance.onend = this.next.bind(this);
-        this._utterances.forEach(u => {
-            u.voice = voices.find(v => (v.lang === u.lang) || v.lang.startsWith(u.lang + '-'))
-                || voices.find(v => v.default)
-                || voices[0];
-            u.length = u.chunks.map(c => c.text).join(' ').length;
-            this._length += u.length + 1;
-        });
-        this._currentUtterance = -1;
-        this.next();
+
+        this.next(e);
     }
 
+    /**
+     * Play the next utterance
+     *
+     * @param {SpeechSynthesisEvent} e Event
+     */
     Speakable.prototype.next = function (e) {
         if (this._utterances.length > (this._currentUtterance + 1)) {
             if (this._currentUtterance >= 0) {
                 this._offset += this._utterances[this._currentUtterance].length + 1;
             }
-            ++this._currentUtterance;
-            const utterance = this._utterances[this._currentUtterance];
-            speechUtterance.text = utterance.chunks.map(c => c.text).join(' ');
-            speechUtterance.voice = utterance.voice;
+            const utterance = this._utterances[++this._currentUtterance];
+            speechUtterance.text = utterance.text;
+            speechUtterance.voice = this._getUtteranceVoice(utterance);
             speechSynthesis.speak(speechUtterance);
         } else {
             this.stop(e);
         }
+    }
+
+    /**
+     * Find the voice for an utterance
+     *
+     * @param {Object} utterance Utterance
+     *
+     * @returns {SpeechSynthesisVoice} Voice
+     *
+     * @private
+     */
+    Speakable.prototype._getUtteranceVoice = function (utterance) {
+        if (!utterance.voice) {
+            utterance.voice = voices.find(v => (v.lang === utterance.lang) || v.lang.startsWith(utterance.lang + '-'))
+                || voices.find(v => v.default)
+                || voices[0];
+        }
+        return utterance.voice;
     }
 
     /**
@@ -525,7 +498,7 @@
         this._progress = Math.round(100 * (this._offset + e.charIndex) / this._length);
         this._controls.progress.value = this._progress;
         this._controls.progress.textContent = `${this._progress}%`;
-        console.log(this._progress, e.name, speechUtterance.text.substr(e.charIndex, e.charLength));
+        console.debug(this._progress, e.name, speechUtterance.text.substr(e.charIndex, e.charLength));
     }
 
     /**
@@ -553,12 +526,14 @@
      * @param {Event} e Event
      */
     Speakable.prototype.stop = function (e) {
+        speechUtterance.onboundary = null;
+        speechUtterance.onend = null;
+        speechSynthesis.cancel();
+
         this._player.classList.add('spkbl-player--inactive');
         this._player.classList.remove('spkbl-player--active');
         this._player.classList.remove('spkbl-player--paused');
         this._controls.play.focus();
-
-        speechSynthesis.cancel();
     }
 
     /**
