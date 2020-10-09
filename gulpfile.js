@@ -4,10 +4,14 @@ const { src, dest, watch } = require('gulp');
 const typescript = require('gulp-typescript');
 const uglify = require('gulp-uglify');
 const sass = require('gulp-sass');
+const rename = require('gulp-rename');
 
 exports.default = function () {
-    watch('src/*.js', { ignoreInitial: false }, function (cb) {
-        src('src/spkbl.js')
+    watch(
+        'src/*.js',
+        { ignoreInitial: false },
+        function (cb) {
+            src('src/spkbl.js')
             .pipe(
                 typescript(
                     {
@@ -16,14 +20,20 @@ exports.default = function () {
                     }
                 )
             )
+            .pipe(dest('dist'))
             .pipe(uglify())
+            .pipe(rename(path => path.basename += '.min'))
             .pipe(dest('dist'));
-        cb();
-    });
-    watch('src/**/*.scss', function (cb) {
-        src('src/spkbl.scss')
+            cb();
+        }
+    );
+    watch(
+        'src/**/*.scss',
+        function (cb) {
+            src('src/spkbl.scss')
             .pipe(sass().on('error', sass.logError))
             .pipe(dest('dist'));
-        cb();
-    });
+            cb();
+        }
+    );
 };
