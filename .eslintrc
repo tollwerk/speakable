@@ -1,0 +1,32 @@
+{
+    "env": {
+        "es6": true,
+        "browser": true,
+        "node": true
+    },
+    "parserOptions": {
+        "ecmaVersion": 6,
+        "sourceType": "script"
+    },
+    "extends": "airbnb",
+    "rules": {
+        "no-restricted-syntax": 0,
+        "import/no-dynamic-require": 0,
+        "global-require": 0,
+        "indent": [
+            "error",
+            4
+        ],
+        "no-plusplus": [
+            "error",
+            {
+                "allowForLoopAfterthoughts": true
+            }
+        ],
+        "no-multi-assign": 0,
+        "max-len": [
+            "error",
+            120
+        ]
+    }
+}

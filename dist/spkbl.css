@@ -1,3 +1,4 @@
+@charset "UTF-8";
 .spkbl-player > * {
   background-color: #eee;
   vertical-align: middle;
@@ -9,6 +10,21 @@
 .spkbl-player--inactive .spkbl-ctrl:not(.spkbl-ctrl--play),
 .spkbl-player--active .spkbl-ctrl--play {
   display: none; }
+
+.spkbl-ctrl--play::before {
+  content: '▶️ '; }
+
+.spkbl-ctrl--stop::before {
+  content: '⏹️ '; }
+
+.spkbl-ctrl--reset::before {
+  content: '⏮️️ '; }
+
+.spkbl-ctrl--pause::before {
+  content: '⏸️️ '; }
+
+.spkbl-ctrl--pause[aria-pressed="true"]::before {
+  content: '▶️ '; }
 
 .spkbl-ctrl--progress {
   width: 5em;
