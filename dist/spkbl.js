@@ -502,6 +502,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         this.player.classList.add('spkbl-player--active');
         this.player.classList.remove('spkbl-player--inactive');
         this.controls.pause.focus();
+        d.addEventListener('keyup', this.escape.bind(this));
         this.currentUtterance = -1;
         this.offset = 0;
         this.progress = 0;
@@ -509,6 +510,24 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         speechUtterance.onboundary = this.boundary.bind(this);
         speechUtterance.onend = this.next.bind(this);
         this.next(e);
+    };
+    /**
+     * Escape the player
+     *
+     * @param {KeyboardEvent} e Event
+     */
+    Speakable.prototype.escape = function escape(e) {
+        var evt = e || window.event;
+        var isEscape = false;
+        if ('key' in evt) {
+            isEscape = (evt.key === 'Escape' || evt.key === 'Esc');
+        }
+        else {
+            isEscape = (evt.keyCode === 27);
+        }
+        if (isEscape) {
+            this.stop();
+        }
     };
     /**
      * Play the next utterance
@@ -600,6 +619,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         speechUtterance.onend = null;
         speechSynthesis.cancel();
         this.togglePause(true);
+        d.removeEventListener('keyup', this.escape.bind(this));
         this.player.classList.add('spkbl-player--inactive');
         this.player.classList.remove('spkbl-player--active');
         this.player.classList.remove('spkbl-player--paused');

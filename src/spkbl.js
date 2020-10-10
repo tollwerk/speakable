@@ -501,6 +501,7 @@
         this.player.classList.add('spkbl-player--active');
         this.player.classList.remove('spkbl-player--inactive');
         this.controls.pause.focus();
+        d.addEventListener('keyup', this.escape.bind(this));
 
         this.currentUtterance = -1;
         this.offset = 0;
@@ -511,6 +512,24 @@
         speechUtterance.onend = this.next.bind(this);
 
         this.next(e);
+    };
+
+    /**
+     * Escape the player
+     *
+     * @param {KeyboardEvent} e Event
+     */
+    Speakable.prototype.escape = function escape(e) {
+        const evt = e || window.event;
+        let isEscape = false;
+        if ('key' in evt) {
+            isEscape = (evt.key === 'Escape' || evt.key === 'Esc');
+        } else {
+            isEscape = (evt.keyCode === 27);
+        }
+        if (isEscape) {
+            this.stop();
+        }
     };
 
     /**
@@ -605,6 +624,7 @@
         speechUtterance.onend = null;
         speechSynthesis.cancel();
         this.togglePause(true);
+        d.removeEventListener('keyup', this.escape.bind(this));
 
         this.player.classList.add('spkbl-player--inactive');
         this.player.classList.remove('spkbl-player--active');
