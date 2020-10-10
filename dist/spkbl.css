@@ -23,8 +23,11 @@
 .spkbl-ctrl--pause::before {
   content: '⏸️️ '; }
 
-.spkbl-ctrl--pause[aria-pressed="true"]::before {
-  content: '▶️ '; }
+.spkbl-ctrl--pause[aria-pressed="true"] {
+  color: #666;
+  background-color: #bbb; }
+  .spkbl-ctrl--pause[aria-pressed="true"]::before {
+    content: '▶️ '; }
 
 .spkbl-ctrl--progress {
   width: 5em;

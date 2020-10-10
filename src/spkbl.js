@@ -355,7 +355,7 @@
     /**
      * Simple object check
      *
-     * @param item Item
+     * @param   item Item
      * @returns {boolean} Is object
      */
     function isObject(item) {
@@ -403,6 +403,8 @@
         this.length = 0;
         this.offset = 0;
         this.progress = 0;
+        this.paused = false;
+        this.nextOnResume = false;
         this.player = null;
         this.controls = {};
         this.buildPlayer();
@@ -440,7 +442,7 @@
         this.controls.play.type = 'button';
         this.controls.play.className = 'spkbl-ctrl spkbl-ctrl--play';
         this.controls.play.addEventListener('click', this.play.bind(this));
-        this.controls.play.appendChild(d.createTextNode(this.l18n.ctrl.play));
+        this.controls.play.innerHTML = this.l18n.ctrl.play;
         this.player.appendChild(this.controls.play);
 
         // Pause button
@@ -448,7 +450,7 @@
         this.controls.pause.type = 'button';
         this.controls.pause.className = 'spkbl-ctrl spkbl-ctrl--pause';
         this.controls.pause.addEventListener('click', this.pause.bind(this));
-        this.controls.pause.appendChild(d.createTextNode(this.l18n.ctrl.pause));
+        this.controls.pause.innerHTML = this.l18n.ctrl.pause;
         this.controls.pause.setAttribute('aria-pressed', 'false');
         this.player.appendChild(this.controls.pause);
 
@@ -468,7 +470,7 @@
         this.controls.stop.type = 'button';
         this.controls.stop.className = 'spkbl-ctrl spkbl-ctrl--stop';
         this.controls.stop.addEventListener('click', this.stop.bind(this));
-        this.controls.stop.appendChild(d.createTextNode(this.l18n.ctrl.stop));
+        this.controls.stop.innerHTML = this.l18n.ctrl.stop;
         this.player.appendChild(this.controls.stop);
     };
 
@@ -517,7 +519,10 @@
      * @param {SpeechSynthesisEvent} e Event
      */
     Speakable.prototype.next = function next(e) {
-        if (this.utterances.length > (this.currentUtterance + 1)) {
+        if (this.paused) {
+            this.nextOnResume = true;
+            speechSynthesis.cancel();
+        } else if (this.utterances.length > (this.currentUtterance + 1)) {
             if (this.currentUtterance >= 0) {
                 this.offset += this.utterances[this.currentUtterance].length + 1;
             }
@@ -557,7 +562,7 @@
     Speakable.prototype.boundary = function boundary(e) {
         this.progress = Math.round((100 * (this.offset + e.charIndex)) / this.length);
         this.controls.progress.value = this.progress;
-        this.controls.progress.textContent = `${this.progress}%`;
+        this.controls.progress.textContent = `${this.progress} % `;
         // console.debug(this.progress, e.name, speechUtterance.text.substr(e.charIndex, e.charLength));
     };
 
@@ -565,17 +570,31 @@
      * Pause / Resume playing
      */
     Speakable.prototype.pause = function pause() {
-        if (speechSynthesis.speaking) {
-            if (speechSynthesis.paused) {
-                speechSynthesis.resume();
-                this.player.classList.remove('spkbl-player--paused');
-                this.controls.pause.setAttribute('aria-pressed', 'false');
-            } else {
-                speechSynthesis.pause();
-                this.player.classList.add('spkbl-player--paused');
-                this.controls.pause.setAttribute('aria-pressed', 'true');
-            }
+        speechSynthesis[this.togglePause(this.paused) ? 'pause' : 'resume']();
+        if (this.nextOnResume) {
+            this.nextOnResume = false;
+            this.next();
         }
+    };
+
+    /**
+     * Toggle pause button
+     *
+     * @var {Boolean} paused Is paused
+     *
+     * @return {Boolean} Is paused
+     */
+    Speakable.prototype.togglePause = function togglePause(paused) {
+        if (paused) {
+            this.paused = false;
+            this.player.classList.remove('spkbl-player--paused');
+            this.controls.pause.setAttribute('aria-pressed', 'false');
+        } else {
+            this.paused = true;
+            this.player.classList.add('spkbl-player--paused');
+            this.controls.pause.setAttribute('aria-pressed', 'true');
+        }
+        return this.paused;
     };
 
     /**
@@ -585,6 +604,7 @@
         speechUtterance.onboundary = null;
         speechUtterance.onend = null;
         speechSynthesis.cancel();
+        this.togglePause(true);
 
         this.player.classList.add('spkbl-player--inactive');
         this.player.classList.remove('spkbl-player--active');

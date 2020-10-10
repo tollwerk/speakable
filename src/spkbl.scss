@@ -16,6 +16,33 @@
     display: none;
 }
 
+.spkbl-ctrl--play::before {
+    content: '▶️ ';
+}
+
+.spkbl-ctrl--stop::before {
+    content: '⏹️ ';
+}
+
+.spkbl-ctrl--reset::before {
+    content: '⏮️️ ';
+}
+
+.spkbl-ctrl--pause {
+    &::before {
+        content: '⏸️️ ';
+    }
+
+    &[aria-pressed="true"] {
+        color: #666;
+        background-color: #bbb;
+
+        &::before {
+            content: '▶️ ';
+        }
+    }
+}
+
 .spkbl-ctrl--progress {
     width: 5em;
     appearance: none;
