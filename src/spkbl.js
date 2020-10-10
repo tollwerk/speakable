@@ -10,7 +10,7 @@
         selector: '.spkbl',
         insert: 'before',
         multivoice: true
-    }
+    };
 
     /**
      * Language labels
@@ -19,10 +19,10 @@
      */
     const l18n = {
         ctrl: {
-            play: 'Text vorlesen',
+            play: 'Read text',
             pause: 'Pause',
-            progress: 'Fortschritt',
-            stop: 'Schließen'
+            progress: 'Progress',
+            stop: 'Resume'
         }
     };
 
@@ -66,7 +66,8 @@
                     items: (new AstParser(lang, this.multivoice))._parse(c),
                 });
             } else if (c.nodeType === Element.TEXT_NODE) {
-                const text = c.nodeValue.trim().replace(/[\s\r\n]+/g, ' ');
+                const text = c.nodeValue.trim()
+                    .replace(/[\s\r\n]+/g, ' ');
                 if (text.length) {
                     this.items.push({
                         type: 0,
@@ -78,7 +79,7 @@
             }
         });
         return this.items;
-    }
+    };
 
     /**
      * Test whether an element is a block level element
@@ -89,7 +90,7 @@
      */
     AstParser.prototype._isBlockLevelElement = function (element) {
         return blockLevelElements.indexOf(element.tagName.toLowerCase()) !== -1;
-    }
+    };
 
     /**
      * Chunk the parsed items
@@ -104,50 +105,72 @@
         const chunksRecursive = c => {
             if (sentence === null) {
                 if (c.type) {
-                    sentence = { lang: c.lang, chunks: [] };
+                    sentence = {
+                        lang: c.lang,
+                        chunks: []
+                    };
                     c.items.forEach(chunksRecursive);
                     chunks.push(sentence);
                     sentence = null;
                 } else {
-                    sentence = { lang: c.lang, chunks: [{ node: c.node, text: c.text }] };
+                    sentence = {
+                        lang: c.lang,
+                        chunks: [{
+                            node: c.node,
+                            text: c.text
+                        }]
+                    };
                 }
             } else {
                 switch (c.type) {
-                    case 2:
+                case 2:
+                    if (sentence.chunks.length) {
+                        chunks.push(sentence);
+                        sentence = {
+                            lang: c.lang,
+                            chunks: []
+                        };
+                    } else {
+                        sentence.lang = c.lang;
+                    }
+                    c.items.forEach(chunksRecursive);
+                    if (sentence.chunks.length) {
+                        chunks.push(sentence);
+                    }
+                    sentence = null;
+                    break;
+                case 1:
+                    if (c.lang === sentence.lang) {
+                        c.items.forEach(chunksRecursive);
+                    } else {
+                        const lang = sentence.lang;
                         if (sentence.chunks.length) {
                             chunks.push(sentence);
-                            sentence = { lang: c.lang, chunks: [] };
-                        } else {
-                            sentence.lang = c.lang;
                         }
+                        sentence = {
+                            lang: c.lang,
+                            chunks: []
+                        };
                         c.items.forEach(chunksRecursive);
                         if (sentence.chunks.length) {
                             chunks.push(sentence);
                         }
-                        sentence = null;
-                        break;
-                    case 1:
-                        if (c.lang === sentence.lang) {
-                            c.items.forEach(chunksRecursive);
-                        } else {
-                            const lang = sentence.lang;
-                            if (sentence.chunks.length) {
-                                chunks.push(sentence);
-                            }
-                            sentence = { lang: c.lang, chunks: [] };
-                            c.items.forEach(chunksRecursive);
-                            if (sentence.chunks.length) {
-                                chunks.push(sentence);
-                            }
-                            sentence = { lang, chunks: [] };
-                        }
-                        break;
-                    default:
-                        sentence.chunks.push({ node: c.node, text: c.text });
+                        sentence = {
+                            lang,
+                            chunks: []
+                        };
+                    }
+                    break;
+                default:
+                    sentence.chunks.push({
+                        node: c.node,
+                        text: c.text
+                    });
                 }
             }
-        }
-        this._parse(element).forEach(chunksRecursive);
+        };
+        this._parse(element)
+            .forEach(chunksRecursive);
         if (sentence && sentence.chunks.length) {
             chunks.push(sentence);
         }
@@ -175,6 +198,40 @@
             return consolidated;
         }
         return [];
+    };
+
+    /**
+     * Simple object check
+     *
+     * @param item Item
+     * @returns {boolean} Is object
+     */
+    function isObject(item) {
+        return (item && typeof item === 'object' && !Array.isArray(item));
+    }
+
+    /**
+     * Deep merge two objects
+     *
+     * @param target Target
+     * @param ...sources Source(s)
+     */
+    function mergeDeep(target, ...sources) {
+        if (!sources.length) return target;
+        const source = sources.shift();
+
+        if (isObject(target) && isObject(source)) {
+            for (const key in source) {
+                if (isObject(source[key])) {
+                    if (!target[key]) Object.assign(target, { [key]: {} });
+                    mergeDeep(target[key], source[key]);
+                } else {
+                    Object.assign(target, { [key]: source[key] });
+                }
+            }
+        }
+
+        return mergeDeep(target, ...sources);
     }
 
     /**
@@ -327,7 +384,7 @@
             }
         }
         return sentences;
-    }
+    };
 
     /**
      * Speakable
@@ -340,6 +397,8 @@
     function Speakable(element, options) {
         this.element = element;
         this.options = options;
+        this.l18n = mergeDeep(l18n, this.options.l18n || {});
+        console.log(this.l18n);
         this._utterances = [];
         this._currentUtterance = 0;
         this._length = 0;
@@ -365,7 +424,7 @@
     Speakable.prototype._determineLanguage = function (element) {
         const lang = element.lang;
         return lang || (element.parentNode ? this._determineLanguage(element.parentNode) : null);
-    }
+    };
 
     /**
      * Build the player
@@ -382,7 +441,7 @@
         this._controls.play.type = 'button';
         this._controls.play.className = 'spkbl-ctrl spkbl-ctrl--play';
         this._controls.play.addEventListener('click', this.play.bind(this));
-        this._controls.play.appendChild(d.createTextNode(l18n.ctrl.play));
+        this._controls.play.appendChild(d.createTextNode(this.l18n.ctrl.play));
         this._player.appendChild(this._controls.play);
 
         // Pause button
@@ -390,7 +449,7 @@
         this._controls.pause.type = 'button';
         this._controls.pause.className = 'spkbl-ctrl spkbl-ctrl--pause';
         this._controls.pause.addEventListener('click', this.pause.bind(this));
-        this._controls.pause.appendChild(d.createTextNode(l18n.ctrl.pause));
+        this._controls.pause.appendChild(d.createTextNode(this.l18n.ctrl.pause));
         this._controls.pause.setAttribute('aria-pressed', 'false');
         this._player.appendChild(this._controls.pause);
 
@@ -399,7 +458,7 @@
         this._controls.progress.className = 'spkbl-ctrl spkbl-ctrl--progress';
         this._controls.progress.max = '100';
         this._controls.progress.value = '0';
-        this._controls.progress.setAttribute('aria-label', l18n.ctrl.progress);
+        this._controls.progress.setAttribute('aria-label', this.l18n.ctrl.progress);
         this._controls.progress.setAttribute('aria-hidden', 'true');
         this._controls.progress.setAttribute('readonly', 'true');
         this._controls.progress.appendChild(d.createTextNode('0%'));
@@ -410,9 +469,9 @@
         this._controls.stop.type = 'button';
         this._controls.stop.className = 'spkbl-ctrl spkbl-ctrl--stop';
         this._controls.stop.addEventListener('click', this.stop.bind(this));
-        this._controls.stop.appendChild(d.createTextNode(l18n.ctrl.stop));
+        this._controls.stop.appendChild(d.createTextNode(this.l18n.ctrl.stop));
         this._player.appendChild(this._controls.stop);
-    }
+    };
 
     /**
      * Start playing
@@ -422,14 +481,15 @@
     Speakable.prototype._setUtterances = function (utterances) {
         this._length = 0;
         this._utterances = utterances.map(u => {
-            u.text = u.chunks.map(c => c.text).join(' ');
+            u.text = u.chunks.map(c => c.text)
+                .join(' ');
             u.length = u.text.length;
             this._length += u.length + 1;
             return u;
         });
         console.table(this._utterances);
         --this._length;
-    }
+    };
 
     /**
      * Start playing
@@ -450,7 +510,7 @@
         speechUtterance.onend = this.next.bind(this);
 
         this.next(e);
-    }
+    };
 
     /**
      * Play the next utterance
@@ -469,7 +529,7 @@
         } else {
             this.stop(e);
         }
-    }
+    };
 
     /**
      * Find the voice for an utterance
@@ -487,7 +547,7 @@
                 || voices[0];
         }
         return utterance.voice;
-    }
+    };
 
     /**
      * Boundary handler
@@ -499,7 +559,7 @@
         this._controls.progress.value = this._progress;
         this._controls.progress.textContent = `${this._progress}%`;
         console.debug(this._progress, e.name, speechUtterance.text.substr(e.charIndex, e.charLength));
-    }
+    };
 
     /**
      * Pause / Resume playing
@@ -507,6 +567,7 @@
      * @param {Event} e Event
      */
     Speakable.prototype.pause = function (e) {
+        console.log(speechSynthesis.speaking, speechSynthesis.paused);
         if (speechSynthesis.speaking) {
             if (speechSynthesis.paused) {
                 speechSynthesis.resume();
@@ -514,11 +575,12 @@
                 this._controls.pause.setAttribute('aria-pressed', 'false');
             } else {
                 speechSynthesis.pause();
+                console.log(speechSynthesis.paused);
                 this._player.classList.add('spkbl-player--paused');
                 this._controls.pause.setAttribute('aria-pressed', 'true');
             }
         }
-    }
+    };
 
     /**
      * Stop playing
@@ -534,7 +596,7 @@
         this._player.classList.remove('spkbl-player--active');
         this._player.classList.remove('spkbl-player--paused');
         this._controls.play.focus();
-    }
+    };
 
     /**
      * Inject the player
@@ -542,21 +604,21 @@
      * @private
      */
     Speakable.prototype._injectPlayer = function () {
-        if (typeof this.options.insert === "function") {
+        if (typeof this.options.insert === 'function') {
             this.options.insert(this.element, this._player);
             return;
         }
         switch (this.options.insert) {
-            case 'before':
-                this.element.parentNode.insertBefore(this._player, this.element);
-                break;
-            case 'after':
-                this.element.parentNode.insertBefore(this._player, this.element.nextSibling);
-                break;
-            default:
-                this.element.insertBefore(this._player, this.element.firstChild);
+        case 'before':
+            this.element.parentNode.insertBefore(this._player, this.element);
+            break;
+        case 'after':
+            this.element.parentNode.insertBefore(this._player, this.element.nextSibling);
+            break;
+        default:
+            this.element.insertBefore(this._player, this.element.firstChild);
         }
-    }
+    };
 
     /**
      * Initialize all speakables
@@ -579,11 +641,12 @@
 
             const opts = Object.assign(defaultOptions, options);
             const selector = opts.selector || '';
-            return selector.length ? Array.from(d.querySelectorAll(selector)).map(s => new Speakable(s, opts)) : [];
+            return selector.length ? Array.from(d.querySelectorAll(selector))
+                .map(s => new Speakable(s, opts)) : [];
         }
 
         return [];
-    }
+    };
 
     if (typeof exports !== 'undefined') {
         exports.Speakable = Speakable;

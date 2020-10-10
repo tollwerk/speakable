@@ -42,7 +42,17 @@
         </aside>
         <script src="../dist/spkbl.js"></script>
         <script>
-            Speakable.init({multivoice: true});
+            Speakable.init({
+                multivoice: true,
+                l18n: {
+                    ctrl: {
+                        play: 'Text vorlesen',
+                        pause: 'Pause',
+                        progress: 'Fortschritt',
+                        stop: 'Schließen'
+                    }
+                }
+            });
         </script>
     </body>
 </html>
