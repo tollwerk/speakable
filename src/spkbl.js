@@ -494,6 +494,8 @@
      * Start playing
      *
      * @param {Array} utterances Utterances
+     *
+     * @private
      */
     Speakable.prototype.setUtterances = function setUtterances(utterances) {
         this.length = 0;
@@ -516,6 +518,11 @@
      * @param {SpeechSynthesisEvent} e Event
      */
     Speakable.prototype.play = function play(e) {
+        if (Speakable.current) {
+            Speakable.current.halt();
+        }
+        Speakable.current = this;
+
         this.player.classList.add('spkbl-player--active');
         this.player.classList.remove('spkbl-player--inactive');
         this.controls.pause.focus();
@@ -635,9 +642,17 @@
     };
 
     /**
-     * Stop playing
+     * Stop playing and reset player
      */
     Speakable.prototype.stop = function stop() {
+        this.halt();
+        this.controls.play.focus();
+    };
+
+    /**
+     * Stop playing
+     */
+    Speakable.prototype.halt = function halt() {
         speechUtterance.onboundary = null;
         speechUtterance.onend = null;
         speechSynthesis.cancel();
@@ -647,7 +662,6 @@
         this.player.classList.add('spkbl-player--inactive');
         this.player.classList.remove('spkbl-player--active');
         this.player.classList.remove('spkbl-player--paused');
-        this.controls.play.focus();
     };
 
     /**
@@ -702,6 +716,13 @@
 
         return [];
     };
+
+    /**
+     * Currently active player
+     *
+     * @type {Speakable}
+     */
+    Speakable.current = null;
 
     if (typeof exports !== 'undefined') {
         exports.Speakable = Speakable;

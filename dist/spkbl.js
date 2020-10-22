@@ -482,6 +482,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      * Start playing
      *
      * @param {Array} utterances Utterances
+     *
+     * @private
      */
     Speakable.prototype.setUtterances = function setUtterances(utterances) {
         var _this = this;
@@ -502,6 +504,10 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      * @param {SpeechSynthesisEvent} e Event
      */
     Speakable.prototype.play = function play(e) {
+        if (Speakable.current) {
+            Speakable.current.halt();
+        }
+        Speakable.current = this;
         this.player.classList.add('spkbl-player--active');
         this.player.classList.remove('spkbl-player--inactive');
         this.controls.pause.focus();
@@ -615,9 +621,16 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         return this.paused;
     };
     /**
-     * Stop playing
+     * Stop playing and reset player
      */
     Speakable.prototype.stop = function stop() {
+        this.halt();
+        this.controls.play.focus();
+    };
+    /**
+     * Stop playing
+     */
+    Speakable.prototype.halt = function halt() {
         speechUtterance.onboundary = null;
         speechUtterance.onend = null;
         speechSynthesis.cancel();
@@ -626,7 +639,6 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         this.player.classList.add('spkbl-player--inactive');
         this.player.classList.remove('spkbl-player--active');
         this.player.classList.remove('spkbl-player--paused');
-        this.controls.play.focus();
     };
     /**
      * Inject the player
@@ -675,6 +687,12 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         }
         return [];
     };
+    /**
+     * Currently active player
+     *
+     * @type {Speakable}
+     */
+    Speakable.current = null;
     if (typeof exports !== 'undefined') {
         exports.Speakable = Speakable;
     }
