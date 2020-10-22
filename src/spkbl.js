@@ -1,5 +1,6 @@
 /* eslint no-param-reassign: ["error", { "props": false }] */
-(function iffe(w, d) {
+(function iffe(w, d)
+{
     /**
      * Speech Synthesis Voices
      *
@@ -159,7 +160,6 @@
      */
     const defaultOptions = {
         selector: '.spkbl',
-        insert: 'before',
         multivoice: true,
     };
 
@@ -194,7 +194,8 @@
      *
      * @constructor
      */
-    function AstParser(language, multivoice) {
+    function AstParser(language, multivoice)
+    {
         this.lang = language;
         this.multivoice = multivoice;
         this.items = [];
@@ -207,29 +208,36 @@
      *
      * @returns {[]} Items
      */
-    AstParser.prototype.parse = function parse(element) {
-        element.childNodes.forEach((c) => {
+    AstParser.prototype.parse = function parse(element)
+    {
+        element.childNodes.forEach(
+            (c) => {
             if (c.nodeType === Element.ELEMENT_NODE) {
                 const lang = this.multivoice ? (c.lang || this.lang) : this.lang;
-                this.items.push({
+                this.items.push(
+                {
                     type: 1 + this.isBlockLevelElement(c),
                     lang,
                     node: c,
                     items: (new AstParser(lang, this.multivoice)).parse(c),
-                });
-            } else if (c.nodeType === Element.TEXT_NODE) {
-                const text = c.nodeValue.trim()
-                    .replace(/[\s\r\n]+/g, ' ');
-                if (text.length) {
-                    this.items.push({
-                        type: 0,
-                        lang: this.lang,
-                        node: c,
-                        text,
-                    });
                 }
+                    );
+            } else if (c.nodeType === Element.TEXT_NODE) {
+                    const text = c.nodeValue.trim()
+                    .replace(/[\s\r\n]+/g, ' ');
+                    if (text.length) {
+                        this.items.push(
+                            {
+                                type: 0,
+                                lang: this.lang,
+                                node: c,
+                                text,
+                            }
+                        );
+                    }
             }
-        });
+            }
+        );
         return this.items;
     };
 
@@ -240,7 +248,8 @@
      *
      * @returns {boolean} Is block level element
      */
-    AstParser.prototype.isBlockLevelElement = function isBlockLevelElement(element) {
+    AstParser.prototype.isBlockLevelElement = function isBlockLevelElement(element)
+    {
         return blockLevelElements.indexOf(element.tagName.toLowerCase()) !== -1;
     };
 
@@ -251,7 +260,8 @@
      *
      * @returns {Array} Chunked items
      */
-    AstParser.prototype.chunked = function chunked(element) {
+    AstParser.prototype.chunked = function chunked(element)
+    {
         const chunks = [];
         let sentence = null;
         const chunksRecursive = (c) => {
@@ -275,60 +285,62 @@
                 }
             } else {
                 switch (c.type) {
-                case 2:
-                    if (sentence.chunks.length) {
-                        chunks.push(sentence);
-                        sentence = {
-                            lang: c.lang,
-                            chunks: [],
-                        };
-                    } else {
-                        sentence.lang = c.lang;
-                    }
-                    c.items.forEach(chunksRecursive);
-                    if (sentence.chunks.length) {
-                        chunks.push(sentence);
-                    }
-                    sentence = null;
-                    break;
-                case 1:
-                    if (c.lang === sentence.lang) {
-                        c.items.forEach(chunksRecursive);
-                    } else {
-                        const { lang } = sentence;
+                    case 2:
                         if (sentence.chunks.length) {
                             chunks.push(sentence);
+                            sentence = {
+                                lang: c.lang,
+                                chunks: [],
+                            };
+                        } else {
+                            sentence.lang = c.lang;
                         }
-                        sentence = {
-                            lang: c.lang,
-                            chunks: [],
-                        };
                         c.items.forEach(chunksRecursive);
                         if (sentence.chunks.length) {
                             chunks.push(sentence);
                         }
-                        sentence = {
-                            lang,
-                            chunks: [],
-                        };
-                    }
+                        sentence = null;
                     break;
-                default:
-                    sentence.chunks.push({
-                        node: c.node,
-                        text: c.text,
-                    });
+                    case 1:
+                        if (c.lang === sentence.lang) {
+                            c.items.forEach(chunksRecursive);
+                        } else {
+                            const { lang } = sentence;
+                            if (sentence.chunks.length) {
+                                chunks.push(sentence);
+                            }
+                            sentence = {
+                                lang: c.lang,
+                                chunks: [],
+                            };
+                            c.items.forEach(chunksRecursive);
+                            if (sentence.chunks.length) {
+                                chunks.push(sentence);
+                            }
+                            sentence = {
+                                lang,
+                                chunks: [],
+                            };
+                        }
+                    break;
+                    default:
+                        sentence.chunks.push(
+                            {
+                                node: c.node,
+                                text: c.text,
+                            }
+                        );
                 }
             }
         };
         this.parse(element)
             .forEach(chunksRecursive);
         if (sentence && sentence.chunks.length) {
-            chunks.push(sentence);
+            chunks[chunks.length] = sentence;
         }
         if (chunks.length) {
             const consolidated = [chunks.shift()];
-            do {
+            while (chunks.length) {
                 const chunk = chunks.shift();
                 const last = consolidated.length - 1;
                 if (chunk.lang === consolidated[last].lang) {
@@ -336,17 +348,21 @@
                 } else {
                     consolidated.push(chunk);
                 }
-            } while (chunks.length);
-            consolidated.forEach((c) => {
+            }
+            consolidated.forEach(
+                (c) => {
                 let char = 0;
-                c.chunks.forEach((chunk) => {
-                    chunk.char = char;
-                    if (!punctuation.test(chunk.text.substr(-1))) {
-                        chunk.text += '.';
-                    }
-                    char += chunk.text.length + 1;
-                });
-            });
+                c.chunks.forEach(
+                        (chunk) => {
+                        chunk.char = char;
+                        if (!punctuation.test(chunk.text.substr(-1))) {
+                            chunk.text += '.';
+                        }
+                        char += chunk.text.length + 1;
+                        }
+                    );
+                }
+            );
             return consolidated;
         }
         return [];
@@ -358,7 +374,8 @@
      * @param   item Item
      * @returns {boolean} Is object
      */
-    function isObject(item) {
+    function isObject(item)
+    {
         return (item && typeof item === 'object' && !Array.isArray(item));
     }
 
@@ -368,7 +385,8 @@
      * @param target Target
      * @param ...sources Source(s)
      */
-    function mergeDeep(target, ...sources) {
+    function mergeDeep(target, ...sources)
+    {
         if (!sources.length) return target;
         const source = sources.shift();
 
@@ -377,14 +395,14 @@
                 if (isObject(source[key])) {
                     if (!target[key]) Object.assign(target, { [key]: {} });
                     mergeDeep(target[key], source[key]);
-                } else {
-                    Object.assign(target, { [key]: source[key] });
-                }
+            } else {
+                Object.assign(target, { [key]: source[key] });
             }
         }
+    }
 
         return mergeDeep(target, ...sources);
-    }
+}
 
     /**
      * Speakable
@@ -394,26 +412,29 @@
      *
      * @constructor
      */
-    function Speakable(element, options) {
-        this.element = element;
-        this.options = options;
-        this.l18n = mergeDeep(l18n, this.options.l18n || {});
-        this.utterances = [];
-        this.currentUtterance = 0;
-        this.length = 0;
-        this.offset = 0;
-        this.progress = 0;
-        this.paused = false;
-        this.nextOnResume = false;
-        this.player = null;
-        this.controls = {};
-        this.buildPlayer();
-        this.injectPlayer();
+function Speakable(element, options)
+{
+    this.element = element;
+    this.options = options;
+    this.l18n = mergeDeep(l18n, this.options.l18n || {});
+    this.utterances = [];
+    this.currentUtterance = 0;
+    this.length = 0;
+    this.offset = 0;
+    this.progress = 0;
+    this.paused = false;
+    this.nextOnResume = false;
+    this.player = null;
+    this.controls = {};
+    this.buildPlayer();
 
-        // Parse the element contents
-        const astParser = new AstParser(this.determineLanguage(this.element) || 'en', this.options.multivoice);
-        this.setUtterances(astParser.chunked(this.element));
-    }
+    // Parse the element contents
+    const astParser = new AstParser(this.determineLanguage(this.element) || 'en', this.options.multivoice);
+    this.setUtterances(astParser.chunked(this.element));
+
+    // Inject the player
+    this.injectPlayer();
+}
 
     /**
      * Determine element language
@@ -422,7 +443,8 @@
      *
      * @private
      */
-    Speakable.prototype.determineLanguage = function determineLanguage(element) {
+    Speakable.prototype.determineLanguage = function determineLanguage(element)
+    {
         const { lang } = element;
         return lang || (element.parentNode ? this.determineLanguage(element.parentNode) : null);
     };
@@ -432,7 +454,8 @@
      *
      * @private
      */
-    Speakable.prototype.buildPlayer = function buildPlayer() {
+    Speakable.prototype.buildPlayer = function buildPlayer()
+    {
         this.player = d.createElement('div');
         this.player.className = 'spkbl-player spkbl-player--inactive';
         this.player.role = 'group';
@@ -479,15 +502,18 @@
      *
      * @param {Array} utterances Utterances
      */
-    Speakable.prototype.setUtterances = function setUtterances(utterances) {
+    Speakable.prototype.setUtterances = function setUtterances(utterances)
+    {
         this.length = 0;
-        this.utterances = utterances.map((u) => {
+        this.utterances = utterances.map(
+            (u) => {
             u.text = u.chunks.map((c) => c.text)
                 .join(' ');
             u.length = u.text.length;
             this.length += u.length + 1;
-            return u;
-        });
+                return u;
+            }
+        );
         // console.table(this.utterances);
         this.length += 1;
     };
@@ -497,7 +523,8 @@
      *
      * @param {SpeechSynthesisEvent} e Event
      */
-    Speakable.prototype.play = function play(e) {
+    Speakable.prototype.play = function play(e)
+    {
         this.player.classList.add('spkbl-player--active');
         this.player.classList.remove('spkbl-player--inactive');
         this.controls.pause.focus();
@@ -519,7 +546,8 @@
      *
      * @param {KeyboardEvent} e Event
      */
-    Speakable.prototype.escape = function escape(e) {
+    Speakable.prototype.escape = function escape(e)
+    {
         const evt = e || window.event;
         let isEscape = false;
         if ('key' in evt) {
@@ -537,7 +565,8 @@
      *
      * @param {SpeechSynthesisEvent} e Event
      */
-    Speakable.prototype.next = function next(e) {
+    Speakable.prototype.next = function next(e)
+    {
         if (this.paused) {
             this.nextOnResume = true;
             speechSynthesis.cancel();
@@ -564,9 +593,10 @@
      *
      * @private
      */
-    Speakable.prototype.getUtteranceVoice = function getUtteranceVoice(utterance) {
+    Speakable.prototype.getUtteranceVoice = function getUtteranceVoice(utterance)
+    {
         if (!utterance.voice) {
-            utterance.voice = voices.find((v) => (v.lang === utterance.lang) || v.lang.startsWith(`${utterance.lang}-`))
+            utterance.voice = voices.find((v) => (v.lang === utterance.lang) || v.lang.startsWith(`${utterance.lang} - `))
                 || voices.find((v) => v.default)
                 || voices[0];
         }
@@ -578,7 +608,8 @@
      *
      * @param {SpeechSynthesisEvent} e Event
      */
-    Speakable.prototype.boundary = function boundary(e) {
+    Speakable.prototype.boundary = function boundary(e)
+    {
         this.progress = Math.round((100 * (this.offset + e.charIndex)) / this.length);
         this.controls.progress.value = this.progress;
         this.controls.progress.textContent = `${this.progress} % `;
@@ -588,7 +619,8 @@
     /**
      * Pause / Resume playing
      */
-    Speakable.prototype.pause = function pause() {
+    Speakable.prototype.pause = function pause()
+    {
         speechSynthesis[this.togglePause(this.paused) ? 'pause' : 'resume']();
         if (this.nextOnResume) {
             this.nextOnResume = false;
@@ -603,7 +635,8 @@
      *
      * @return {Boolean} Is paused
      */
-    Speakable.prototype.togglePause = function togglePause(paused) {
+    Speakable.prototype.togglePause = function togglePause(paused)
+    {
         if (paused) {
             this.paused = false;
             this.player.classList.remove('spkbl-player--paused');
@@ -619,7 +652,8 @@
     /**
      * Stop playing
      */
-    Speakable.prototype.stop = function stop() {
+    Speakable.prototype.stop = function stop()
+    {
         speechUtterance.onboundary = null;
         speechUtterance.onend = null;
         speechSynthesis.cancel();
@@ -637,20 +671,21 @@
      *
      * @private
      */
-    Speakable.prototype.injectPlayer = function injectPlayer() {
+    Speakable.prototype.injectPlayer = function injectPlayer()
+    {
         if (typeof this.options.insert === 'function') {
             this.options.insert(this.element, this.player);
             return;
         }
         switch (this.options.insert) {
-        case 'before':
-            this.element.parentNode.insertBefore(this.player, this.element);
+            case 'before':
+                this.element.parentNode.insertBefore(this.player, this.element);
             break;
-        case 'after':
-            this.element.parentNode.insertBefore(this.player, this.element.nextSibling);
+            case 'after':
+                this.element.parentNode.insertBefore(this.player, this.element.nextSibling);
             break;
-        default:
-            this.element.insertBefore(this.player, this.element.firstChild);
+            default:
+                this.element.insertBefore(this.player, this.element.firstChild);
         }
     };
 
@@ -661,7 +696,8 @@
      *
      * @returns {Array} Speakables
      */
-    Speakable.init = function init(options = {}) {
+    Speakable.init = function init(options = {})
+    {
         // If the Web Speech API is supported
         if ('SpeechSynthesisUtterance' in w) {
             speechUtterance = new SpeechSynthesisUtterance();
@@ -669,9 +705,12 @@
             speechUtterance.pitch = 1;
             speechUtterance.rate = 1;
             voices = speechSynthesis.getVoices();
-            speechSynthesis.addEventListener('voiceschanged', () => {
-                voices = speechSynthesis.getVoices();
-            });
+            speechSynthesis.addEventListener(
+                'voiceschanged',
+                () => {
+                    voices = speechSynthesis.getVoices();
+                }
+            );
 
             const opts = Object.assign(defaultOptions, options);
             const selector = opts.selector || '';
@@ -687,4 +726,4 @@
     } else {
         w.Speakable = Speakable;
     }
-}(typeof global !== 'undefined' ? global : window, document));
+    }(typeof global !== 'undefined' ? global : window, document));

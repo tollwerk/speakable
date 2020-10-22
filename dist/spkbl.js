@@ -6,7 +6,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
     return r;
 };
 /* eslint no-param-reassign: ["error", { "props": false }] */
-(function iffe(w, d) {
+(function iffe(w, d)
+{
     /**
      * Speech Synthesis Voices
      *
@@ -164,7 +165,6 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      */
     var defaultOptions = {
         selector: '.spkbl',
-        insert: 'before',
         multivoice: true,
     };
     /**
@@ -196,7 +196,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @constructor
      */
-    function AstParser(language, multivoice) {
+    function AstParser(language, multivoice)
+    {
         this.lang = language;
         this.multivoice = multivoice;
         this.items = [];
@@ -208,31 +209,37 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @returns {[]} Items
      */
-    AstParser.prototype.parse = function parse(element) {
+    AstParser.prototype.parse = function parse(element)
+    {
         var _this = this;
-        element.childNodes.forEach(function (c) {
-            if (c.nodeType === Element.ELEMENT_NODE) {
-                var lang = _this.multivoice ? (c.lang || _this.lang) : _this.lang;
-                _this.items.push({
-                    type: 1 + _this.isBlockLevelElement(c),
-                    lang: lang,
-                    node: c,
-                    items: (new AstParser(lang, _this.multivoice)).parse(c),
-                });
-            }
-            else if (c.nodeType === Element.TEXT_NODE) {
-                var text = c.nodeValue.trim()
+        element.childNodes.forEach(
+            function (c) {
+                if (c.nodeType === Element.ELEMENT_NODE) {
+                    var lang = _this.multivoice ? (c.lang || _this.lang) : _this.lang;
+                    _this.items.push(
+                        {
+                            type: 1 + _this.isBlockLevelElement(c),
+                            lang: lang,
+                            node: c,
+                            items: (new AstParser(lang, _this.multivoice)).parse(c),
+                        }
+                    );
+                } else if (c.nodeType === Element.TEXT_NODE) {
+                    var text = c.nodeValue.trim()
                     .replace(/[\s\r\n]+/g, ' ');
-                if (text.length) {
-                    _this.items.push({
-                        type: 0,
-                        lang: _this.lang,
-                        node: c,
-                        text: text,
-                    });
+                    if (text.length) {
+                        _this.items.push(
+                            {
+                                type: 0,
+                                lang: _this.lang,
+                                node: c,
+                                text: text,
+                            }
+                        );
+                    }
                 }
             }
-        });
+        );
         return this.items;
     };
     /**
@@ -242,7 +249,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @returns {boolean} Is block level element
      */
-    AstParser.prototype.isBlockLevelElement = function isBlockLevelElement(element) {
+    AstParser.prototype.isBlockLevelElement = function isBlockLevelElement(element)
+    {
         return blockLevelElements.indexOf(element.tagName.toLowerCase()) !== -1;
     };
     /**
@@ -252,7 +260,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @returns {Array} Chunked items
      */
-    AstParser.prototype.chunked = function chunked(element) {
+    AstParser.prototype.chunked = function chunked(element)
+    {
         var chunks = [];
         var sentence = null;
         var chunksRecursive = function (c) {
@@ -265,18 +274,16 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                     c.items.forEach(chunksRecursive);
                     chunks.push(sentence);
                     sentence = null;
-                }
-                else {
+                } else {
                     sentence = {
                         lang: c.lang,
                         chunks: [{
-                                node: c.node,
-                                text: c.text,
-                            }],
+                            node: c.node,
+                            text: c.text,
+                        }],
                     };
                 }
-            }
-            else {
+            } else {
                 switch (c.type) {
                     case 2:
                         if (sentence.chunks.length) {
@@ -285,8 +292,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                                 lang: c.lang,
                                 chunks: [],
                             };
-                        }
-                        else {
+                        } else {
                             sentence.lang = c.lang;
                         }
                         c.items.forEach(chunksRecursive);
@@ -298,8 +304,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                     case 1:
                         if (c.lang === sentence.lang) {
                             c.items.forEach(chunksRecursive);
-                        }
-                        else {
+                        } else {
                             var lang = sentence.lang;
                             if (sentence.chunks.length) {
                                 chunks.push(sentence);
@@ -319,40 +324,45 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                         }
                         break;
                     default:
-                        sentence.chunks.push({
-                            node: c.node,
-                            text: c.text,
-                        });
+                        sentence.chunks.push(
+                            {
+                                node: c.node,
+                                text: c.text,
+                            }
+                        );
                 }
             }
         };
         this.parse(element)
             .forEach(chunksRecursive);
         if (sentence && sentence.chunks.length) {
-            chunks.push(sentence);
+            chunks[chunks.length] = sentence;
         }
         if (chunks.length) {
             var consolidated = [chunks.shift()];
-            do {
+            while (chunks.length) {
                 var chunk = chunks.shift();
                 var last = consolidated.length - 1;
                 if (chunk.lang === consolidated[last].lang) {
                     Array.prototype.push.apply(consolidated[last].chunks, chunk.chunks);
-                }
-                else {
+                } else {
                     consolidated.push(chunk);
                 }
-            } while (chunks.length);
-            consolidated.forEach(function (c) {
-                var char = 0;
-                c.chunks.forEach(function (chunk) {
-                    chunk.char = char;
-                    if (!punctuation.test(chunk.text.substr(-1))) {
-                        chunk.text += '.';
-                    }
-                    char += chunk.text.length + 1;
-                });
-            });
+            }
+            consolidated.forEach(
+                function (c) {
+                    var char = 0;
+                    c.chunks.forEach(
+                        function (chunk) {
+                            chunk.char = char;
+                            if (!punctuation.test(chunk.text.substr(-1))) {
+                                chunk.text += '.';
+                            }
+                            char += chunk.text.length + 1;
+                        }
+                    );
+                }
+            );
             return consolidated;
         }
         return [];
@@ -363,7 +373,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      * @param   item Item
      * @returns {boolean} Is object
      */
-    function isObject(item) {
+    function isObject(item)
+    {
         return (item && typeof item === 'object' && !Array.isArray(item));
     }
     /**
@@ -372,7 +383,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      * @param target Target
      * @param ...sources Source(s)
      */
-    function mergeDeep(target) {
+    function mergeDeep(target)
+    {
         var _a, _b;
         var sources = [];
         for (var _i = 1; _i < arguments.length; _i++) {
@@ -387,8 +399,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                     if (!target[key])
                         Object.assign(target, (_a = {}, _a[key] = {}, _a));
                     mergeDeep(target[key], source[key]);
-                }
-                else {
+                } else {
                     Object.assign(target, (_b = {}, _b[key] = source[key], _b));
                 }
             }
@@ -403,7 +414,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @constructor
      */
-    function Speakable(element, options) {
+    function Speakable(element, options)
+    {
         this.element = element;
         this.options = options;
         this.l18n = mergeDeep(l18n, this.options.l18n || {});
@@ -417,10 +429,11 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         this.player = null;
         this.controls = {};
         this.buildPlayer();
-        this.injectPlayer();
         // Parse the element contents
         var astParser = new AstParser(this.determineLanguage(this.element) || 'en', this.options.multivoice);
         this.setUtterances(astParser.chunked(this.element));
+        // Inject the player
+        this.injectPlayer();
     }
     /**
      * Determine element language
@@ -429,7 +442,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @private
      */
-    Speakable.prototype.determineLanguage = function determineLanguage(element) {
+    Speakable.prototype.determineLanguage = function determineLanguage(element)
+    {
         var lang = element.lang;
         return lang || (element.parentNode ? this.determineLanguage(element.parentNode) : null);
     };
@@ -438,7 +452,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @private
      */
-    Speakable.prototype.buildPlayer = function buildPlayer() {
+    Speakable.prototype.buildPlayer = function buildPlayer()
+    {
         this.player = d.createElement('div');
         this.player.className = 'spkbl-player spkbl-player--inactive';
         this.player.role = 'group';
@@ -480,16 +495,22 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @param {Array} utterances Utterances
      */
-    Speakable.prototype.setUtterances = function setUtterances(utterances) {
+    Speakable.prototype.setUtterances = function setUtterances(utterances)
+    {
         var _this = this;
         this.length = 0;
-        this.utterances = utterances.map(function (u) {
-            u.text = u.chunks.map(function (c) { return c.text; })
+        this.utterances = utterances.map(
+            function (u) {
+                u.text = u.chunks.map(
+                    function (c) {
+                        return c.text; }
+                )
                 .join(' ');
-            u.length = u.text.length;
-            _this.length += u.length + 1;
-            return u;
-        });
+                u.length = u.text.length;
+                _this.length += u.length + 1;
+                return u;
+            }
+        );
         // console.table(this.utterances);
         this.length += 1;
     };
@@ -498,7 +519,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @param {SpeechSynthesisEvent} e Event
      */
-    Speakable.prototype.play = function play(e) {
+    Speakable.prototype.play = function play(e)
+    {
         this.player.classList.add('spkbl-player--active');
         this.player.classList.remove('spkbl-player--inactive');
         this.controls.pause.focus();
@@ -516,13 +538,13 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @param {KeyboardEvent} e Event
      */
-    Speakable.prototype.escape = function escape(e) {
+    Speakable.prototype.escape = function escape(e)
+    {
         var evt = e || window.event;
         var isEscape = false;
         if ('key' in evt) {
             isEscape = (evt.key === 'Escape' || evt.key === 'Esc');
-        }
-        else {
+        } else {
             isEscape = (evt.keyCode === 27);
         }
         if (isEscape) {
@@ -534,12 +556,12 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @param {SpeechSynthesisEvent} e Event
      */
-    Speakable.prototype.next = function next(e) {
+    Speakable.prototype.next = function next(e)
+    {
         if (this.paused) {
             this.nextOnResume = true;
             speechSynthesis.cancel();
-        }
-        else if (this.utterances.length > (this.currentUtterance + 1)) {
+        } else if (this.utterances.length > (this.currentUtterance + 1)) {
             if (this.currentUtterance >= 0) {
                 this.offset += this.utterances[this.currentUtterance].length + 1;
             }
@@ -548,8 +570,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
             speechUtterance.text = utterance.text;
             speechUtterance.voice = this.getUtteranceVoice(utterance);
             speechSynthesis.speak(speechUtterance);
-        }
-        else {
+        } else {
             this.stop(e);
         }
     };
@@ -562,10 +583,17 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @private
      */
-    Speakable.prototype.getUtteranceVoice = function getUtteranceVoice(utterance) {
+    Speakable.prototype.getUtteranceVoice = function getUtteranceVoice(utterance)
+    {
         if (!utterance.voice) {
-            utterance.voice = voices.find(function (v) { return (v.lang === utterance.lang) || v.lang.startsWith(utterance.lang + "-"); })
-                || voices.find(function (v) { return v.default; })
+            utterance.voice = voices.find(
+                function (v) {
+                    return (v.lang === utterance.lang) || v.lang.startsWith(utterance.lang + " - "); }
+            )
+                || voices.find(
+                    function (v) {
+                        return v.default; }
+                )
                 || voices[0];
         }
         return utterance.voice;
@@ -575,7 +603,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @param {SpeechSynthesisEvent} e Event
      */
-    Speakable.prototype.boundary = function boundary(e) {
+    Speakable.prototype.boundary = function boundary(e)
+    {
         this.progress = Math.round((100 * (this.offset + e.charIndex)) / this.length);
         this.controls.progress.value = this.progress;
         this.controls.progress.textContent = this.progress + " % ";
@@ -584,7 +613,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
     /**
      * Pause / Resume playing
      */
-    Speakable.prototype.pause = function pause() {
+    Speakable.prototype.pause = function pause()
+    {
         speechSynthesis[this.togglePause(this.paused) ? 'pause' : 'resume']();
         if (this.nextOnResume) {
             this.nextOnResume = false;
@@ -598,13 +628,13 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @return {Boolean} Is paused
      */
-    Speakable.prototype.togglePause = function togglePause(paused) {
+    Speakable.prototype.togglePause = function togglePause(paused)
+    {
         if (paused) {
             this.paused = false;
             this.player.classList.remove('spkbl-player--paused');
             this.controls.pause.setAttribute('aria-pressed', 'false');
-        }
-        else {
+        } else {
             this.paused = true;
             this.player.classList.add('spkbl-player--paused');
             this.controls.pause.setAttribute('aria-pressed', 'true');
@@ -614,7 +644,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
     /**
      * Stop playing
      */
-    Speakable.prototype.stop = function stop() {
+    Speakable.prototype.stop = function stop()
+    {
         speechUtterance.onboundary = null;
         speechUtterance.onend = null;
         speechSynthesis.cancel();
@@ -630,7 +661,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @private
      */
-    Speakable.prototype.injectPlayer = function injectPlayer() {
+    Speakable.prototype.injectPlayer = function injectPlayer()
+    {
         if (typeof this.options.insert === 'function') {
             this.options.insert(this.element, this.player);
             return;
@@ -653,8 +685,10 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @returns {Array} Speakables
      */
-    Speakable.init = function init(options) {
-        if (options === void 0) { options = {}; }
+    Speakable.init = function init(options)
+    {
+        if (options === void 0) {
+            options = {}; }
         // If the Web Speech API is supported
         if ('SpeechSynthesisUtterance' in w) {
             speechUtterance = new SpeechSynthesisUtterance();
@@ -662,20 +696,25 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
             speechUtterance.pitch = 1;
             speechUtterance.rate = 1;
             voices = speechSynthesis.getVoices();
-            speechSynthesis.addEventListener('voiceschanged', function () {
-                voices = speechSynthesis.getVoices();
-            });
+            speechSynthesis.addEventListener(
+                'voiceschanged',
+                function () {
+                    voices = speechSynthesis.getVoices();
+                }
+            );
             var opts_1 = Object.assign(defaultOptions, options);
             var selector = opts_1.selector || '';
             return selector.length ? Array.from(d.querySelectorAll(selector))
-                .map(function (s) { return new Speakable(s, opts_1); }) : [];
+                .map(
+                    function (s) {
+                        return new Speakable(s, opts_1); }
+                ) : [];
         }
         return [];
     };
     if (typeof exports !== 'undefined') {
         exports.Speakable = Speakable;
-    }
-    else {
+    } else {
         w.Speakable = Speakable;
     }
 }(typeof global !== 'undefined' ? global : window, document));
