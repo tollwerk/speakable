@@ -1,10 +1,9 @@
 /* eslint no-param-reassign: ["error", { "props": false }] */
-(function iffe(w, d)
-{
+(function iffe(w, d) {
     /**
      * Speech Synthesis Voices
      *
-     * @type {*[SpeechSynthesisVoice]}
+     * @type {SpeechSynthesisVoice[]}
      */
     let voices = [];
     let speechUtterance = null;
@@ -152,7 +151,7 @@
     //     return sentences;
     // };
 
-    const punctuation = /[’'‘’`“”"[\](){}…,.!;?\-:\u0964\u0965]/;
+    const punctuation = /[’'‘`“”"[\](){}…,.!;?\-:\u0964\u0965]/;
     /**
      * Default options
      *
@@ -194,8 +193,7 @@
      *
      * @constructor
      */
-    function AstParser(language, multivoice)
-    {
+    function AstParser(language, multivoice) {
         this.lang = language;
         this.multivoice = multivoice;
         this.items = [];
@@ -208,23 +206,22 @@
      *
      * @returns {[]} Items
      */
-    AstParser.prototype.parse = function parse(element)
-    {
+    AstParser.prototype.parse = function parse(element) {
         element.childNodes.forEach(
             (c) => {
-            if (c.nodeType === Element.ELEMENT_NODE) {
-                const lang = this.multivoice ? (c.lang || this.lang) : this.lang;
-                this.items.push(
-                {
-                    type: 1 + this.isBlockLevelElement(c),
-                    lang,
-                    node: c,
-                    items: (new AstParser(lang, this.multivoice)).parse(c),
-                }
+                if (c.nodeType === Element.ELEMENT_NODE) {
+                    const lang = this.multivoice ? (c.lang || this.lang) : this.lang;
+                    this.items.push(
+                        {
+                            type: 1 + this.isBlockLevelElement(c),
+                            lang,
+                            node: c,
+                            items: (new AstParser(lang, this.multivoice)).parse(c),
+                        }
                     );
-            } else if (c.nodeType === Element.TEXT_NODE) {
+                } else if (c.nodeType === Element.TEXT_NODE) {
                     const text = c.nodeValue.trim()
-                    .replace(/[\s\r\n]+/g, ' ');
+                        .replace(/[\s\r\n]+/g, ' ');
                     if (text.length) {
                         this.items.push(
                             {
@@ -235,7 +232,7 @@
                             }
                         );
                     }
-            }
+                }
             }
         );
         return this.items;
@@ -248,8 +245,7 @@
      *
      * @returns {boolean} Is block level element
      */
-    AstParser.prototype.isBlockLevelElement = function isBlockLevelElement(element)
-    {
+    AstParser.prototype.isBlockLevelElement = function isBlockLevelElement(element) {
         return blockLevelElements.indexOf(element.tagName.toLowerCase()) !== -1;
     };
 
@@ -260,8 +256,7 @@
      *
      * @returns {Array} Chunked items
      */
-    AstParser.prototype.chunked = function chunked(element)
-    {
+    AstParser.prototype.chunked = function chunked(element) {
         const chunks = [];
         let sentence = null;
         const chunksRecursive = (c) => {
@@ -272,7 +267,9 @@
                         chunks: [],
                     };
                     c.items.forEach(chunksRecursive);
-                    chunks.push(sentence);
+                    if (sentence && sentence.chunks.length) {
+                        chunks.push(sentence);
+                    }
                     sentence = null;
                 } else {
                     sentence = {
@@ -285,51 +282,51 @@
                 }
             } else {
                 switch (c.type) {
-                    case 2:
+                case 2:
+                    if (sentence.chunks.length) {
+                        chunks.push(sentence);
+                        sentence = {
+                            lang: c.lang,
+                            chunks: [],
+                        };
+                    } else {
+                        sentence.lang = c.lang;
+                    }
+                    c.items.forEach(chunksRecursive);
+                    if (sentence && sentence.chunks.length) {
+                        chunks.push(sentence);
+                    }
+                    sentence = null;
+                    break;
+                case 1:
+                    if (c.lang === sentence.lang) {
+                        c.items.forEach(chunksRecursive);
+                    } else {
+                        const { lang } = sentence;
                         if (sentence.chunks.length) {
                             chunks.push(sentence);
-                            sentence = {
-                                lang: c.lang,
-                                chunks: [],
-                            };
-                        } else {
-                            sentence.lang = c.lang;
                         }
+                        sentence = {
+                            lang: c.lang,
+                            chunks: [],
+                        };
                         c.items.forEach(chunksRecursive);
                         if (sentence.chunks.length) {
                             chunks.push(sentence);
                         }
-                        sentence = null;
+                        sentence = {
+                            lang,
+                            chunks: [],
+                        };
+                    }
                     break;
-                    case 1:
-                        if (c.lang === sentence.lang) {
-                            c.items.forEach(chunksRecursive);
-                        } else {
-                            const { lang } = sentence;
-                            if (sentence.chunks.length) {
-                                chunks.push(sentence);
-                            }
-                            sentence = {
-                                lang: c.lang,
-                                chunks: [],
-                            };
-                            c.items.forEach(chunksRecursive);
-                            if (sentence.chunks.length) {
-                                chunks.push(sentence);
-                            }
-                            sentence = {
-                                lang,
-                                chunks: [],
-                            };
+                default:
+                    sentence.chunks.push(
+                        {
+                            node: c.node,
+                            text: c.text,
                         }
-                    break;
-                    default:
-                        sentence.chunks.push(
-                            {
-                                node: c.node,
-                                text: c.text,
-                            }
-                        );
+                    );
                 }
             }
         };
@@ -351,14 +348,14 @@
             }
             consolidated.forEach(
                 (c) => {
-                let char = 0;
-                c.chunks.forEach(
+                    let char = 0;
+                    c.chunks.forEach(
                         (chunk) => {
-                        chunk.char = char;
-                        if (!punctuation.test(chunk.text.substr(-1))) {
-                            chunk.text += '.';
-                        }
-                        char += chunk.text.length + 1;
+                            chunk.char = char;
+                            if (!punctuation.test(chunk.text.substr(-1))) {
+                                chunk.text += '.';
+                            }
+                            char += chunk.text.length + 1;
                         }
                     );
                 }
@@ -371,11 +368,11 @@
     /**
      * Simple object check
      *
-     * @param   item Item
+     * @param item Item
+     *
      * @returns {boolean} Is object
      */
-    function isObject(item)
-    {
+    function isObject(item) {
         return (item && typeof item === 'object' && !Array.isArray(item));
     }
 
@@ -383,26 +380,25 @@
      * Deep merge two objects
      *
      * @param target Target
-     * @param ...sources Source(s)
+     * @param sources Source(s)
      */
-    function mergeDeep(target, ...sources)
-    {
+    function mergeDeep(target, ...sources) {
         if (!sources.length) return target;
         const source = sources.shift();
 
         if (isObject(target) && isObject(source)) {
             for (const key in source) {
-                if (isObject(source[key])) {
+                if (Object.prototype.hasOwnProperty.call(source, key) && isObject(source[key])) {
                     if (!target[key]) Object.assign(target, { [key]: {} });
                     mergeDeep(target[key], source[key]);
-            } else {
-                Object.assign(target, { [key]: source[key] });
+                } else {
+                    Object.assign(target, { [key]: source[key] });
+                }
             }
         }
-    }
 
         return mergeDeep(target, ...sources);
-}
+    }
 
     /**
      * Speakable
@@ -412,29 +408,28 @@
      *
      * @constructor
      */
-function Speakable(element, options)
-{
-    this.element = element;
-    this.options = options;
-    this.l18n = mergeDeep(l18n, this.options.l18n || {});
-    this.utterances = [];
-    this.currentUtterance = 0;
-    this.length = 0;
-    this.offset = 0;
-    this.progress = 0;
-    this.paused = false;
-    this.nextOnResume = false;
-    this.player = null;
-    this.controls = {};
-    this.buildPlayer();
+    function Speakable(element, options) {
+        this.element = element;
+        this.options = options;
+        this.l18n = mergeDeep(l18n, this.options.l18n || {});
+        this.utterances = [];
+        this.currentUtterance = 0;
+        this.length = 0;
+        this.offset = 0;
+        this.progress = 0;
+        this.paused = false;
+        this.nextOnResume = false;
+        this.player = null;
+        this.controls = {};
+        this.buildPlayer();
 
-    // Parse the element contents
-    const astParser = new AstParser(this.determineLanguage(this.element) || 'en', this.options.multivoice);
-    this.setUtterances(astParser.chunked(this.element));
+        // Parse the element contents
+        const astParser = new AstParser(this.determineLanguage(this.element) || 'en', this.options.multivoice);
+        this.setUtterances(astParser.chunked(this.element));
 
-    // Inject the player
-    this.injectPlayer();
-}
+        // Inject the player
+        this.injectPlayer();
+    }
 
     /**
      * Determine element language
@@ -443,8 +438,7 @@ function Speakable(element, options)
      *
      * @private
      */
-    Speakable.prototype.determineLanguage = function determineLanguage(element)
-    {
+    Speakable.prototype.determineLanguage = function determineLanguage(element) {
         const { lang } = element;
         return lang || (element.parentNode ? this.determineLanguage(element.parentNode) : null);
     };
@@ -454,8 +448,7 @@ function Speakable(element, options)
      *
      * @private
      */
-    Speakable.prototype.buildPlayer = function buildPlayer()
-    {
+    Speakable.prototype.buildPlayer = function buildPlayer() {
         this.player = d.createElement('div');
         this.player.className = 'spkbl-player spkbl-player--inactive';
         this.player.role = 'group';
@@ -502,15 +495,14 @@ function Speakable(element, options)
      *
      * @param {Array} utterances Utterances
      */
-    Speakable.prototype.setUtterances = function setUtterances(utterances)
-    {
+    Speakable.prototype.setUtterances = function setUtterances(utterances) {
         this.length = 0;
         this.utterances = utterances.map(
             (u) => {
-            u.text = u.chunks.map((c) => c.text)
-                .join(' ');
-            u.length = u.text.length;
-            this.length += u.length + 1;
+                u.text = u.chunks.map((c) => c.text)
+                    .join(' ');
+                u.length = u.text.length;
+                this.length += u.length + 1;
                 return u;
             }
         );
@@ -523,8 +515,7 @@ function Speakable(element, options)
      *
      * @param {SpeechSynthesisEvent} e Event
      */
-    Speakable.prototype.play = function play(e)
-    {
+    Speakable.prototype.play = function play(e) {
         this.player.classList.add('spkbl-player--active');
         this.player.classList.remove('spkbl-player--inactive');
         this.controls.pause.focus();
@@ -546,10 +537,9 @@ function Speakable(element, options)
      *
      * @param {KeyboardEvent} e Event
      */
-    Speakable.prototype.escape = function escape(e)
-    {
+    Speakable.prototype.escape = function escape(e) {
         const evt = e || window.event;
-        let isEscape = false;
+        let isEscape;
         if ('key' in evt) {
             isEscape = (evt.key === 'Escape' || evt.key === 'Esc');
         } else {
@@ -565,8 +555,7 @@ function Speakable(element, options)
      *
      * @param {SpeechSynthesisEvent} e Event
      */
-    Speakable.prototype.next = function next(e)
-    {
+    Speakable.prototype.next = function next(e) {
         if (this.paused) {
             this.nextOnResume = true;
             speechSynthesis.cancel();
@@ -593,10 +582,9 @@ function Speakable(element, options)
      *
      * @private
      */
-    Speakable.prototype.getUtteranceVoice = function getUtteranceVoice(utterance)
-    {
+    Speakable.prototype.getUtteranceVoice = function getUtteranceVoice(utterance) {
         if (!utterance.voice) {
-            utterance.voice = voices.find((v) => (v.lang === utterance.lang) || v.lang.startsWith(`${utterance.lang} - `))
+            utterance.voice = voices.find((v) => (v.lang === utterance.lang) || v.lang.startsWith(`${utterance.lang}-`))
                 || voices.find((v) => v.default)
                 || voices[0];
         }
@@ -608,8 +596,7 @@ function Speakable(element, options)
      *
      * @param {SpeechSynthesisEvent} e Event
      */
-    Speakable.prototype.boundary = function boundary(e)
-    {
+    Speakable.prototype.boundary = function boundary(e) {
         this.progress = Math.round((100 * (this.offset + e.charIndex)) / this.length);
         this.controls.progress.value = this.progress;
         this.controls.progress.textContent = `${this.progress} % `;
@@ -619,8 +606,7 @@ function Speakable(element, options)
     /**
      * Pause / Resume playing
      */
-    Speakable.prototype.pause = function pause()
-    {
+    Speakable.prototype.pause = function pause() {
         speechSynthesis[this.togglePause(this.paused) ? 'pause' : 'resume']();
         if (this.nextOnResume) {
             this.nextOnResume = false;
@@ -635,8 +621,7 @@ function Speakable(element, options)
      *
      * @return {Boolean} Is paused
      */
-    Speakable.prototype.togglePause = function togglePause(paused)
-    {
+    Speakable.prototype.togglePause = function togglePause(paused) {
         if (paused) {
             this.paused = false;
             this.player.classList.remove('spkbl-player--paused');
@@ -652,8 +637,7 @@ function Speakable(element, options)
     /**
      * Stop playing
      */
-    Speakable.prototype.stop = function stop()
-    {
+    Speakable.prototype.stop = function stop() {
         speechUtterance.onboundary = null;
         speechUtterance.onend = null;
         speechSynthesis.cancel();
@@ -671,21 +655,20 @@ function Speakable(element, options)
      *
      * @private
      */
-    Speakable.prototype.injectPlayer = function injectPlayer()
-    {
+    Speakable.prototype.injectPlayer = function injectPlayer() {
         if (typeof this.options.insert === 'function') {
             this.options.insert(this.element, this.player);
             return;
         }
         switch (this.options.insert) {
-            case 'before':
-                this.element.parentNode.insertBefore(this.player, this.element);
+        case 'before':
+            this.element.parentNode.insertBefore(this.player, this.element);
             break;
-            case 'after':
-                this.element.parentNode.insertBefore(this.player, this.element.nextSibling);
+        case 'after':
+            this.element.parentNode.insertBefore(this.player, this.element.nextSibling);
             break;
-            default:
-                this.element.insertBefore(this.player, this.element.firstChild);
+        default:
+            this.element.insertBefore(this.player, this.element.firstChild);
         }
     };
 
@@ -696,8 +679,7 @@ function Speakable(element, options)
      *
      * @returns {Array} Speakables
      */
-    Speakable.init = function init(options = {})
-    {
+    Speakable.init = function init(options = {}) {
         // If the Web Speech API is supported
         if ('SpeechSynthesisUtterance' in w) {
             speechUtterance = new SpeechSynthesisUtterance();
@@ -726,4 +708,4 @@ function Speakable(element, options)
     } else {
         w.Speakable = Speakable;
     }
-    }(typeof global !== 'undefined' ? global : window, document));
+}(typeof global !== 'undefined' ? global : window, document));
