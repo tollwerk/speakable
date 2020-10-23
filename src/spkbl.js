@@ -29,6 +29,7 @@
     const defaultOptions = {
         selector: '.spkbl',
         multivoice: true,
+        hidden: true, // Hide player from assistive technology
         l18n: {
             play: 'Read text',
             pause: 'Pause',
@@ -56,190 +57,6 @@
     function isBlockLevelElement(element) {
         return blockLevelElements.indexOf(element.tagName.toLowerCase()) !== -1;
     }
-
-    /**
-     * Abstract syntax tree parser
-     *
-     * @param {String} language Language
-     * @param {Boolean} multivoice Multiple voices
-     *
-     * @constructor
-     */
-    function AstParser(language, multivoice) {
-        this.lang = language;
-        this.multivoice = multivoice;
-        this.items = [];
-    }
-
-    /**
-     * Parse an element
-     *
-     * @param {Element} element Element
-     *
-     * @returns {Object[]} Items
-     */
-    AstParser.prototype.parse = function parse(element) {
-        element.childNodes.forEach(
-            (c) => {
-                if (c.nodeType === Element.ELEMENT_NODE) {
-                    if (!c.hasAttribute('data-spkbl-skip')) {
-                        const lang = this.multivoice ? (c.lang || this.lang) : this.lang;
-                        this.items.push(
-                            {
-                                type: 1 + isBlockLevelElement(c),
-                                lang,
-                                node: c,
-                                items: (new AstParser(lang, this.multivoice)).parse(c)
-                            }
-                        );
-                    }
-                } else if (c.nodeType === Element.TEXT_NODE) {
-                    const text = c.nodeValue.trim()
-                        .replace(/[\s\r\n]+/g, ' ');
-                    if (text.length) {
-                        this.items.push({
-                                type: 0,
-                                lang: this.lang,
-                                node: c,
-                                text
-                            }
-                        );
-                    }
-                }
-            }
-        );
-        return this.items;
-    };
-
-    /**
-     * Create a new sentence
-     *
-     * @param {Object} chunk Chunk
-     *
-     * @return {{chunks: [], lang: *}}
-     */
-    AstParser.prototype.createSentence = function createSentence(chunk) {
-        return {
-            lang: chunk.lang,
-            chunks: []
-        };
-    }
-
-    /**
-     * Chunk the parsed items
-     *
-     * @param {Element} element Element
-     *
-     * @returns {Array} Chunked items
-     */
-    AstParser.prototype.chunked = function chunked(element) {
-        const chunks = [];
-        let sentence = null;
-        const chunksRecursive = (c) => {
-            if (sentence === null) {
-                if (c.type) {
-                    sentence = {
-                        lang: c.lang,
-                        chunks: []
-                    };
-                    c.items.forEach(chunksRecursive);
-                    if (sentence && sentence.chunks.length) {
-                        chunks.push(sentence);
-                    }
-                    sentence = null;
-                } else {
-                    sentence = {
-                        lang: c.lang,
-                        chunks: [{
-                            node: c.node,
-                            text: c.text
-                        }]
-                    };
-                }
-            } else {
-                switch (c.type) {
-                case 2:
-                    if (sentence.chunks.length) {
-                        chunks.push(sentence);
-                        sentence = {
-                            lang: c.lang,
-                            chunks: []
-                        };
-                    } else {
-                        sentence.lang = c.lang;
-                    }
-                    c.items.forEach(chunksRecursive);
-                    if (sentence && sentence.chunks.length) {
-                        chunks.push(sentence);
-                    }
-                    sentence = null;
-                    break;
-                case 1:
-                    if (c.lang === sentence.lang) {
-                        c.items.forEach(chunksRecursive);
-                    } else {
-                        const { lang } = sentence;
-                        if (sentence.chunks.length) {
-                            chunks.push(sentence);
-                        }
-                        sentence = {
-                            lang: c.lang,
-                            chunks: []
-                        };
-                        c.items.forEach(chunksRecursive);
-                        if (sentence.chunks.length) {
-                            chunks.push(sentence);
-                        }
-                        sentence = {
-                            lang,
-                            chunks: []
-                        };
-                    }
-                    break;
-                default:
-                    sentence.chunks.push(
-                        {
-                            node: c.node,
-                            text: c.text
-                        }
-                    );
-                }
-            }
-        };
-        this.parse(element)
-            .forEach(chunksRecursive);
-        if (sentence && sentence.chunks.length) {
-            chunks[chunks.length] = sentence;
-        }
-        if (chunks.length) {
-            const consolidated = [chunks.shift()];
-            while (chunks.length) {
-                const chunk = chunks.shift();
-                const last = consolidated.length - 1;
-                if (chunk.lang === consolidated[last].lang) {
-                    Array.prototype.push.apply(consolidated[last].chunks, chunk.chunks);
-                } else {
-                    consolidated.push(chunk);
-                }
-            }
-            consolidated.forEach(
-                (c) => {
-                    let char = 0;
-                    c.chunks.forEach(
-                        (chunk) => {
-                            chunk.char = char;
-                            if (!punctuation.test(chunk.text.substr(-1))) {
-                                chunk.text += '.';
-                            }
-                            char += chunk.text.length + 1;
-                        }
-                    );
-                }
-            );
-            return consolidated;
-        }
-        return [];
-    };
 
     /**
      * Simple object check
@@ -293,6 +110,202 @@
         }
         return val;
     }
+
+    /**
+     * Abstract syntax tree parser
+     *
+     * @param {String} language Language
+     * @param {Boolean} multivoice Multiple voices
+     *
+     * @constructor
+     */
+    function AstParser(language, multivoice) {
+        this.lang = language;
+        this.multivoice = multivoice;
+        this.items = [];
+    }
+
+    /**
+     * Parse an element
+     *
+     * @param {Element} element Element
+     *
+     * @returns {Object[]} Items
+     */
+    AstParser.prototype.parse = function parse(element) {
+        element.childNodes.forEach(
+            (c) => {
+                if (c.nodeType === Element.ELEMENT_NODE) {
+                    if (!c.hasAttribute('data-spkbl-skip')) {
+                        const lang = this.multivoice ? (c.lang || this.lang) : this.lang;
+                        this.items.push(
+                            {
+                                type: 1 + isBlockLevelElement(c),
+                                lang,
+                                node: c,
+                                items: (new AstParser(lang, this.multivoice)).parse(c)
+                            }
+                        );
+                    }
+                } else if (c.nodeType === Element.TEXT_NODE) {
+                    const text = c.nodeValue.trim()
+                        .replace(/[\s\r\n]+/g, ' ');
+                    if (text.length) {
+                        this.items.push({
+                            type: 0,
+                            lang: this.lang,
+                            node: c,
+                            text
+                        });
+                    }
+                }
+            }
+        );
+        return this.items;
+    };
+
+    /**
+     * Create a new sentence
+     *
+     * @param {String} lang Language
+     *
+     * @return {{chunks: [], lang: *}}
+     */
+    AstParser.prototype.createSentence = function createSentence(lang) {
+        return {
+            lang,
+            chunks: []
+        };
+    };
+
+    /**
+     * Create a new sentence
+     *
+     * @param {String} lang Language
+     *
+     * @return {{chunks: [], lang: *}}
+     */
+    AstParser.prototype.createSentence = function createSentence(lang) {
+        return {
+            lang,
+            chunks: []
+        };
+    };
+
+    /**
+     * Parse an element into readable chunks
+     *
+     * @param {Element} element Element
+     *
+     * @returns {Array} Readable chunks
+     * @private
+     */
+    AstParser.prototype.createChunks = function createChunks(element) {
+        const chunks = [];
+        let sentence = null;
+        const chunksRecursive = (c) => {
+            if (sentence === null) {
+                sentence = this.createSentence(c.lang);
+                if (c.type) {
+                    c.items.forEach(chunksRecursive);
+                    if (sentence && sentence.chunks.length) {
+                        chunks.push(sentence);
+                    }
+                    sentence = null;
+                } else {
+                    sentence.chunks.push({
+                        node: c.node,
+                        text: c.text
+                    });
+                }
+            } else {
+                switch (c.type) {
+                case 2:
+                    if (sentence.chunks.length) {
+                        chunks.push(sentence);
+                        sentence = this.createSentence(c.lang);
+                    } else {
+                        sentence.lang = c.lang;
+                    }
+                    c.items.forEach(chunksRecursive);
+                    if (sentence && sentence.chunks.length) {
+                        chunks.push(sentence);
+                    }
+                    sentence = null;
+                    break;
+                case 1:
+                    if (c.lang === sentence.lang) {
+                        c.items.forEach(chunksRecursive);
+                    } else {
+                        const { lang } = sentence;
+                        if (sentence.chunks.length) {
+                            chunks.push(sentence);
+                        }
+                        sentence = this.createSentence(c.lang);
+                        c.items.forEach(chunksRecursive);
+                        if (sentence.chunks.length) {
+                            chunks.push(sentence);
+                        }
+                        sentence = this.createSentence(lang);
+                    }
+                    break;
+                default:
+                    sentence.chunks.push(
+                        {
+                            node: c.node,
+                            text: c.text
+                        }
+                    );
+                }
+            }
+        };
+        this.parse(element)
+            .forEach(chunksRecursive);
+        if (sentence && sentence.chunks.length) {
+            chunks[chunks.length] = sentence;
+        }
+        return chunks;
+    };
+
+    /**
+     * Parse an element and return consolidated readable chunks
+     *
+     * @param {Element} element Element
+     *
+     * @returns {Array} Readable chunks
+     */
+    AstParser.prototype.chunked = function chunked(element) {
+        const chunks = this.createChunks(element);
+        if (!chunks.length) {
+            return [];
+        }
+
+        const consolidated = [chunks.shift()];
+        while (chunks.length) {
+            const chunk = chunks.shift();
+            const last = consolidated.length - 1;
+            if (chunk.lang === consolidated[last].lang) {
+                Array.prototype.push.apply(consolidated[last].chunks, chunk.chunks);
+            } else {
+                consolidated.push(chunk);
+            }
+        }
+        consolidated.forEach(
+            (c) => {
+                let char = 0;
+                c.chunks.forEach(
+                    (chunk) => {
+                        chunk.char = char;
+                        if (!punctuation.test(chunk.text.substr(-1))) {
+                            chunk.text += '.';
+                        }
+                        char += chunk.text.length + 1;
+                    }
+                );
+            }
+        );
+        return consolidated;
+    };
 
     /**
      * Speakable
@@ -370,6 +383,9 @@
         this.player = d.createElement('div');
         this.player.className = 'spkbl-player spkbl-player--inactive';
         this.player.role = 'group';
+        if (this.options.hidden) {
+            this.player.setAttribute('aria-hidden', 'true');
+        }
 
         // Play button
         this.controls.play = d.createElement('button');
@@ -388,7 +404,7 @@
         this.controls.pause.setAttribute('aria-pressed', 'false');
         this.player.appendChild(this.controls.pause);
 
-        // Scrubber
+        // Progress bar
         this.controls.progress = d.createElement('progress');
         this.controls.progress.className = 'spkbl-ctrl spkbl-ctrl--progress';
         this.controls.progress.max = '100';
@@ -426,7 +442,6 @@
                 return u;
             }
         );
-        // console.table(this.utterances);
         this.length += 1;
     };
 
@@ -464,13 +479,7 @@
      */
     Speakable.prototype.escape = function escape(e) {
         const evt = e || window.event;
-        let isEscape;
-        if ('key' in evt) {
-            isEscape = (evt.key === 'Escape' || evt.key === 'Esc');
-        } else {
-            isEscape = (evt.keyCode === 27);
-        }
-        if (isEscape) {
+        if (('key' in evt) ? (evt.key === 'Escape' || evt.key === 'Esc') : (evt.keyCode === 27)) {
             this.stop();
         }
     };
@@ -547,15 +556,9 @@
      * @return {Boolean} Is paused
      */
     Speakable.prototype.togglePause = function togglePause(paused) {
-        if (paused) {
-            this.paused = false;
-            this.player.classList.remove('spkbl-player--paused');
-            this.controls.pause.setAttribute('aria-pressed', 'false');
-        } else {
-            this.paused = true;
-            this.player.classList.add('spkbl-player--paused');
-            this.controls.pause.setAttribute('aria-pressed', 'true');
-        }
+        this.paused = !paused;
+        this.player.classList[paused ? 'remove' : 'add']('spkbl-player--paused');
+        this.controls.pause.setAttribute('aria-pressed', paused ? 'false' : 'true');
         return this.paused;
     };
 
@@ -605,6 +608,13 @@
     };
 
     /**
+     * Currently active player
+     *
+     * @type {Speakable}
+     */
+    Speakable.current = null;
+
+    /**
      * Initialize all speakables
      *
      * @param {Object} options Options
@@ -628,19 +638,13 @@
 
             const opts = mergeDeep(defaultOptions, options);
             const selector = opts.selector || '';
+            delete opts.selector;
             return selector.length ? Array.from(d.querySelectorAll(selector))
                 .map((s) => new Speakable(s, opts)) : [];
         }
 
         return [];
     };
-
-    /**
-     * Currently active player
-     *
-     * @type {Speakable}
-     */
-    Speakable.current = null;
 
     if (typeof exports !== 'undefined') {
         exports.Speakable = Speakable;
