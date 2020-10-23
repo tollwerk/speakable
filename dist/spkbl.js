@@ -50,6 +50,16 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header',
         'hgroup', 'hr', 'li', 'main', 'nav', 'ol', 'p', 'pre', 'section', 'table', 'ul'];
     /**
+     * Test whether an element is a block level element
+     *
+     * @param {Element} element element
+     *
+     * @returns {boolean} Is block level element
+     */
+    function isBlockLevelElement(element) {
+        return blockLevelElements.indexOf(element.tagName.toLowerCase()) !== -1;
+    }
+    /**
      * Abstract syntax tree parser
      *
      * @param {String} language Language
@@ -73,13 +83,15 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         var _this = this;
         element.childNodes.forEach(function (c) {
             if (c.nodeType === Element.ELEMENT_NODE) {
-                var lang = _this.multivoice ? (c.lang || _this.lang) : _this.lang;
-                _this.items.push({
-                    type: 1 + _this.isBlockLevelElement(c),
-                    lang: lang,
-                    node: c,
-                    items: (new AstParser(lang, _this.multivoice)).parse(c)
-                });
+                if (!c.hasAttribute('data-spkbl-skip')) {
+                    var lang = _this.multivoice ? (c.lang || _this.lang) : _this.lang;
+                    _this.items.push({
+                        type: 1 + isBlockLevelElement(c),
+                        lang: lang,
+                        node: c,
+                        items: (new AstParser(lang, _this.multivoice)).parse(c)
+                    });
+                }
             }
             else if (c.nodeType === Element.TEXT_NODE) {
                 var text = c.nodeValue.trim()
@@ -97,14 +109,17 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         return this.items;
     };
     /**
-     * Test whether an element is a block level element
+     * Create a new sentence
      *
-     * @param {Element} element element
+     * @param {Object} chunk Chunk
      *
-     * @returns {boolean} Is block level element
+     * @return {{chunks: [], lang: *}}
      */
-    AstParser.prototype.isBlockLevelElement = function isBlockLevelElement(element) {
-        return blockLevelElements.indexOf(element.tagName.toLowerCase()) !== -1;
+    AstParser.prototype.createSentence = function createSentence(chunk) {
+        return {
+            lang: chunk.lang,
+            chunks: []
+        };
     };
     /**
      * Chunk the parsed items

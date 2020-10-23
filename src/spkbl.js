@@ -47,6 +47,17 @@
         'hgroup', 'hr', 'li', 'main', 'nav', 'ol', 'p', 'pre', 'section', 'table', 'ul'];
 
     /**
+     * Test whether an element is a block level element
+     *
+     * @param {Element} element element
+     *
+     * @returns {boolean} Is block level element
+     */
+    function isBlockLevelElement(element) {
+        return blockLevelElements.indexOf(element.tagName.toLowerCase()) !== -1;
+    }
+
+    /**
      * Abstract syntax tree parser
      *
      * @param {String} language Language
@@ -71,21 +82,22 @@
         element.childNodes.forEach(
             (c) => {
                 if (c.nodeType === Element.ELEMENT_NODE) {
-                    const lang = this.multivoice ? (c.lang || this.lang) : this.lang;
-                    this.items.push(
-                        {
-                            type: 1 + this.isBlockLevelElement(c),
-                            lang,
-                            node: c,
-                            items: (new AstParser(lang, this.multivoice)).parse(c)
-                        }
-                    );
+                    if (!c.hasAttribute('data-spkbl-skip')) {
+                        const lang = this.multivoice ? (c.lang || this.lang) : this.lang;
+                        this.items.push(
+                            {
+                                type: 1 + isBlockLevelElement(c),
+                                lang,
+                                node: c,
+                                items: (new AstParser(lang, this.multivoice)).parse(c)
+                            }
+                        );
+                    }
                 } else if (c.nodeType === Element.TEXT_NODE) {
                     const text = c.nodeValue.trim()
                         .replace(/[\s\r\n]+/g, ' ');
                     if (text.length) {
-                        this.items.push(
-                            {
+                        this.items.push({
                                 type: 0,
                                 lang: this.lang,
                                 node: c,
@@ -100,15 +112,18 @@
     };
 
     /**
-     * Test whether an element is a block level element
+     * Create a new sentence
      *
-     * @param {Element} element element
+     * @param {Object} chunk Chunk
      *
-     * @returns {boolean} Is block level element
+     * @return {{chunks: [], lang: *}}
      */
-    AstParser.prototype.isBlockLevelElement = function isBlockLevelElement(element) {
-        return blockLevelElements.indexOf(element.tagName.toLowerCase()) !== -1;
-    };
+    AstParser.prototype.createSentence = function createSentence(chunk) {
+        return {
+            lang: chunk.lang,
+            chunks: []
+        };
+    }
 
     /**
      * Chunk the parsed items
@@ -272,7 +287,8 @@
     function castToBool(val) {
         if ((val === '1') || (val.toLowerCase() === 'true')) {
             return true;
-        } if ((val === '0') || (val.toLowerCase() === 'false')) {
+        }
+        if ((val === '0') || (val.toLowerCase() === 'false')) {
             return false;
         }
         return val;
