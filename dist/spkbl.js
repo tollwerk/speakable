@@ -13,171 +13,33 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      * @type {SpeechSynthesisVoice[]}
      */
     var voices = [];
+    /**
+     * Global Speech Utterance
+     *
+     * @type {SpeechSynthesisUtterance}
+     */
     var speechUtterance = null;
-    // // Sentence splitting
-    // const initSplit = /(\S.+?[.!?\u203D\u2E18\u203C\u2047-\u2049])(?=\s+|$)/g;
-    // const hasSomething = /\S/;
-    // const isAcronym = /[ .][A-Z]\.? *$/i;
-    // const hasEllipse = /(?:\u2026|\.{2,}) *$/;
-    // const newLine = /((?:\r?\n|\r)+)/; // Match different new-line formats
-    // const hasLetter = new ReqExp('[a-z0-9\\u00C0-\\u00FF\\u00a9|\\u00ae|[\\u2000-\\u3300]|\\ud83c[\\ud000-\\udfff]' +
-    //     '|\\ud83d[\\ud000-\\udfff]|\\ud83e[\\ud000-\\udfff]', 'i');
-    // const startWhitespace = /^\s+/;
-    // /**
-    //  * Naiive splitting
-    //  *
-    //  * @param {String} text Text
-    //  *
-    //  * @returns {[]} Sentences
-    //  */
-    // function naiiveSplit(text) {
-    //     const all = [];
-    //     const lines = text.split(newLine);
-    //     for (let i = 0; i < lines.length; ++i) {
-    //         const arr = lines[i].split(initSplit);
-    //         for (let o = 0; o < arr.length; ++o) {
-    //             all.push(arr[o]);
-    //         }
-    //     }
-    //     return all;
-    // }
-    //
-    // /**
-    //  * Test if a string is a sentence
-    //  *
-    //  * @param {String} str Text
-    //  * @param {Object} abbrevs Abbreviations
-    //  *
-    //  * @returns {boolean} Looks like a sentence
-    //  */
-    // function isSentence(str, abbrevs) {
-    //     // check for 'F.B.I.'
-    //     if (isAcronym.test(str) === true) {
-    //         return false;
-    //     }
-    //     // check for '...'
-    //     if (hasEllipse.test(str) === true) {
-    //         return false;
-    //     }
-    //     // must have a letter
-    //     if (hasLetter.test(str) === false) {
-    //         return false;
-    //     }
-    //
-    //     const txt = str.replace(/[.!?\u203D\u2E18\u203C\u2047-\u2049] *$/, '');
-    //     const words = txt.split(' ');
-    //     const lastWord = words[words.length - 1].toLowerCase();
-    //
-    //     // check for 'Mr.'
-    //     if (Object.prototype.hasOwnProperty.call(abbrevs, lastWord)) {
-    //         return false;
-    //     }
-    //     return true;
-    // }
-    //
-    // /**
-    //  * Split a text into sentences
-    //  *
-    //  * @param {String} initialText Text
-    //  *
-    //  * @returns {string[]|[]} Sentences
-    //  */
-    // const splitSentences = function splitSentences(initialText) {
-    //     // let abbrevs = world.cache.abbreviations
-    //     const abbrevs = {};
-    //
-    //     let text = initialText || '';
-    //     text = String(text);
-    //     const sentences = [];
-    //
-    //     // First do a greedy-split..
-    //     const chunks = [];
-    //
-    //     // Ensure it 'smells like' a sentence
-    //     if (!text || typeof text !== 'string' || hasSomething.test(text) === false) {
-    //         return sentences;
-    //     }
-    //
-    //     // cleanup unicode-spaces
-    //     text = text.replace('\xa0', ' ');
-    //
-    //     // Start somewhere:
-    //     const splits = naiiveSplit(text);
-    //
-    //     // Filter-out the crap ones
-    //     for (let i = 0; i < splits.length; ++i) {
-    //         const s = splits[i];
-    //         if (s !== undefined && s !== '') {
-    //             // this is meaningful whitespace
-    //             if (hasSomething.test(s) === false) {
-    //                 // add it to the last one
-    //                 if (chunks[chunks.length - 1]) {
-    //                     chunks[chunks.length - 1] += s;
-    //                 } else if (splits[i + 1]) {
-    //                     // add it to the next one
-    //                     splits[i + 1] = s + splits[i + 1];
-    //                 } else {
-    //                     chunks.push(s);
-    //                 }
-    //             } else {
-    //                 // else, only whitespace, no terms, no sentence
-    //                 chunks.push(s);
-    //             }
-    //         }
-    //     }
-    //
-    //     // detection of non-sentence chunks:
-    //     // loop through these chunks, and join the non-sentence chunks back together..
-    //     for (let i = 0; i < chunks.length; ++i) {
-    //         const c = chunks[i];
-    //         // should this chunk be combined with the next one?
-    //         if (chunks[i + 1] && isSentence(c, abbrevs) === false) {
-    //             chunks[i + 1] = c + (chunks[i + 1] || '');
-    //         } else if (c && c.length > 0) {
-    //             // && hasLetter.test(c)
-    //             // this chunk is a proper sentence..
-    //             sentences.push(c);
-    //             chunks[i] = '';
-    //         }
-    //     }
-    //     // if we never got a sentence, return the given text
-    //     if (!sentences.length) {
-    //         return [text];
-    //     }
-    //
-    //     // move whitespace to the ends of sentences, when possible
-    //     // ['hello',' world'] -> ['hello ','world']
-    //     for (let i = 1; i < sentences.length; i += 1) {
-    //         const ws = sentences[i].match(startWhitespace);
-    //         if (ws !== null) {
-    //             sentences[i - 1] += ws[0];
-    //             sentences[i] = sentences[i].replace(startWhitespace, '');
-    //         }
-    //     }
-    //     return sentences;
-    // };
+    /**
+     * Regular expression to match punctuation
+     *
+     * @type {RegExp}
+     */
     var punctuation = /[’'‘`“”"[\](){}…,.!;?\-:\u0964\u0965]/;
     /**
      * Default options
      *
-     * @type {{selector: string}}
+     * @type {{multivoice: boolean, selector: string,
+     * l18n: {play: string, stop: string, progress: string, pause: string}}}
      */
     var defaultOptions = {
         selector: '.spkbl',
         multivoice: true,
-    };
-    /**
-     * Language labels
-     *
-     * @type {{ctrl: {play: string, stop: string, progress: string, pause: string}}}
-     */
-    var l18n = {
-        ctrl: {
+        l18n: {
             play: 'Read text',
             pause: 'Pause',
             progress: 'Progress',
-            stop: 'Resume',
-        },
+            stop: 'Resume'
+        }
     };
     /**
      * Block level elements
@@ -205,7 +67,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @param {Element} element Element
      *
-     * @returns {[]} Items
+     * @returns {Object[]} Items
      */
     AstParser.prototype.parse = function parse(element) {
         var _this = this;
@@ -216,7 +78,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                     type: 1 + _this.isBlockLevelElement(c),
                     lang: lang,
                     node: c,
-                    items: (new AstParser(lang, _this.multivoice)).parse(c),
+                    items: (new AstParser(lang, _this.multivoice)).parse(c)
                 });
             }
             else if (c.nodeType === Element.TEXT_NODE) {
@@ -227,7 +89,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                         type: 0,
                         lang: _this.lang,
                         node: c,
-                        text: text,
+                        text: text
                     });
                 }
             }
@@ -259,7 +121,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                 if (c.type) {
                     sentence = {
                         lang: c.lang,
-                        chunks: [],
+                        chunks: []
                     };
                     c.items.forEach(chunksRecursive);
                     if (sentence && sentence.chunks.length) {
@@ -272,8 +134,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                         lang: c.lang,
                         chunks: [{
                                 node: c.node,
-                                text: c.text,
-                            }],
+                                text: c.text
+                            }]
                     };
                 }
             }
@@ -284,7 +146,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                             chunks.push(sentence);
                             sentence = {
                                 lang: c.lang,
-                                chunks: [],
+                                chunks: []
                             };
                         }
                         else {
@@ -307,7 +169,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                             }
                             sentence = {
                                 lang: c.lang,
-                                chunks: [],
+                                chunks: []
                             };
                             c.items.forEach(chunksRecursive);
                             if (sentence.chunks.length) {
@@ -315,14 +177,14 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                             }
                             sentence = {
                                 lang: lang,
-                                chunks: [],
+                                chunks: []
                             };
                         }
                         break;
                     default:
                         sentence.chunks.push({
                             node: c.node,
-                            text: c.text,
+                            text: c.text
                         });
                 }
             }
@@ -369,10 +231,10 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         return (item && typeof item === 'object' && !Array.isArray(item));
     }
     /**
-     * Deep merge two objects
+     * Deep merge multiple objects
      *
-     * @param target Target
-     * @param sources Source(s)
+     * @param target Target object
+     * @param sources Source object(s)
      */
     function mergeDeep(target) {
         var _a, _b;
@@ -380,8 +242,9 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         for (var _i = 1; _i < arguments.length; _i++) {
             sources[_i - 1] = arguments[_i];
         }
-        if (!sources.length)
+        if (!sources.length) {
             return target;
+        }
         var source = sources.shift();
         if (isObject(target) && isObject(source)) {
             for (var key in source) {
@@ -398,6 +261,21 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         return mergeDeep.apply(void 0, __spreadArrays([target], sources));
     }
     /**
+     * Cast a value to a Boolean if possible
+     *
+     * @param {String} val Value
+     * @return {boolean|String} Converted value
+     */
+    function castToBool(val) {
+        if ((val === '1') || (val.toLowerCase() === 'true')) {
+            return true;
+        }
+        if ((val === '0') || (val.toLowerCase() === 'false')) {
+            return false;
+        }
+        return val;
+    }
+    /**
      * Speakable
      *
      * @param {Element} element Speakable
@@ -407,8 +285,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      */
     function Speakable(element, options) {
         this.element = element;
-        this.options = options;
-        this.l18n = mergeDeep(l18n, this.options.l18n || {});
+        this.options = this.configure(options, 'data-spkbl');
         this.utterances = [];
         this.currentUtterance = 0;
         this.length = 0;
@@ -425,6 +302,32 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         // Inject the player
         this.injectPlayer();
     }
+    /**
+     * Configure this instance by data attributes
+     *
+     * @param {Object} options Options
+     * @param {String} prefix Attribute prefix
+     *
+     * @private
+     */
+    Speakable.prototype.configure = function configure(options, prefix) {
+        var configured = {};
+        for (var o in options) {
+            if (Object.prototype.hasOwnProperty.call(options, o)) {
+                var attr = prefix + "-" + o;
+                if (isObject(options[o])) {
+                    configured[o] = this.configure(options[o], attr);
+                }
+                else if (this.element.hasAttribute(attr)) {
+                    configured[o] = castToBool(this.element.getAttribute(attr));
+                }
+                else {
+                    configured[o] = options[o];
+                }
+            }
+        }
+        return configured;
+    };
     /**
      * Determine element language
      *
@@ -450,14 +353,14 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         this.controls.play.type = 'button';
         this.controls.play.className = 'spkbl-ctrl spkbl-ctrl--play';
         this.controls.play.addEventListener('click', this.play.bind(this));
-        this.controls.play.innerHTML = this.l18n.ctrl.play;
+        this.controls.play.innerHTML = this.options.l18n.play;
         this.player.appendChild(this.controls.play);
         // Pause button
         this.controls.pause = d.createElement('button');
         this.controls.pause.type = 'button';
         this.controls.pause.className = 'spkbl-ctrl spkbl-ctrl--pause';
         this.controls.pause.addEventListener('click', this.pause.bind(this));
-        this.controls.pause.innerHTML = this.l18n.ctrl.pause;
+        this.controls.pause.innerHTML = this.options.l18n.pause;
         this.controls.pause.setAttribute('aria-pressed', 'false');
         this.player.appendChild(this.controls.pause);
         // Scrubber
@@ -465,7 +368,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         this.controls.progress.className = 'spkbl-ctrl spkbl-ctrl--progress';
         this.controls.progress.max = '100';
         this.controls.progress.value = '0';
-        this.controls.progress.setAttribute('aria-label', this.l18n.ctrl.progress);
+        this.controls.progress.setAttribute('aria-label', this.options.l18n.progress);
         this.controls.progress.setAttribute('aria-hidden', 'true');
         this.controls.progress.setAttribute('readonly', 'true');
         this.controls.progress.appendChild(d.createTextNode('0%'));
@@ -475,7 +378,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         this.controls.stop.type = 'button';
         this.controls.stop.className = 'spkbl-ctrl spkbl-ctrl--stop';
         this.controls.stop.addEventListener('click', this.stop.bind(this));
-        this.controls.stop.innerHTML = this.l18n.ctrl.stop;
+        this.controls.stop.innerHTML = this.options.l18n.stop;
         this.player.appendChild(this.controls.stop);
     };
     /**
@@ -680,7 +583,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
             speechSynthesis.addEventListener('voiceschanged', function () {
                 voices = speechSynthesis.getVoices();
             });
-            var opts_1 = Object.assign(defaultOptions, options);
+            var opts_1 = mergeDeep(defaultOptions, options);
             var selector = opts_1.selector || '';
             return selector.length ? Array.from(d.querySelectorAll(selector))
                 .map(function (s) { return new Speakable(s, opts_1); }) : [];
@@ -699,4 +602,146 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
     else {
         w.Speakable = Speakable;
     }
+    // // Sentence splitting
+    // const initSplit = /(\S.+?[.!?\u203D\u2E18\u203C\u2047-\u2049])(?=\s+|$)/g;
+    // const hasSomething = /\S/;
+    // const isAcronym = /[ .][A-Z]\.? *$/i;
+    // const hasEllipse = /(?:\u2026|\.{2,}) *$/;
+    // const newLine = /((?:\r?\n|\r)+)/; // Match different new-line formats
+    // const hasLetter = new ReqExp('[a-z0-9\\u00C0-\\u00FF\\u00a9|\\u00ae|[\\u2000-\\u3300]|\\ud83c[\\ud000-\\udfff]' +
+    //     '|\\ud83d[\\ud000-\\udfff]|\\ud83e[\\ud000-\\udfff]', 'i');
+    // const startWhitespace = /^\s+/;
+    // /**
+    //  * Naiive splitting
+    //  *
+    //  * @param {String} text Text
+    //  *
+    //  * @returns {[]} Sentences
+    //  */
+    // function naiiveSplit(text) {
+    //     const all = [];
+    //     const lines = text.split(newLine);
+    //     for (let i = 0; i < lines.length; ++i) {
+    //         const arr = lines[i].split(initSplit);
+    //         for (let o = 0; o < arr.length; ++o) {
+    //             all.push(arr[o]);
+    //         }
+    //     }
+    //     return all;
+    // }
+    //
+    // /**
+    //  * Test if a string is a sentence
+    //  *
+    //  * @param {String} str Text
+    //  * @param {Object} abbrevs Abbreviations
+    //  *
+    //  * @returns {boolean} Looks like a sentence
+    //  */
+    // function isSentence(str, abbrevs) {
+    //     // check for 'F.B.I.'
+    //     if (isAcronym.test(str) === true) {
+    //         return false;
+    //     }
+    //     // check for '...'
+    //     if (hasEllipse.test(str) === true) {
+    //         return false;
+    //     }
+    //     // must have a letter
+    //     if (hasLetter.test(str) === false) {
+    //         return false;
+    //     }
+    //
+    //     const txt = str.replace(/[.!?\u203D\u2E18\u203C\u2047-\u2049] *$/, '');
+    //     const words = txt.split(' ');
+    //     const lastWord = words[words.length - 1].toLowerCase();
+    //
+    //     // check for 'Mr.'
+    //     if (Object.prototype.hasOwnProperty.call(abbrevs, lastWord)) {
+    //         return false;
+    //     }
+    //     return true;
+    // }
+    //
+    // /**
+    //  * Split a text into sentences
+    //  *
+    //  * @param {String} initialText Text
+    //  *
+    //  * @returns {string[]|[]} Sentences
+    //  */
+    // const splitSentences = function splitSentences(initialText) {
+    //     // let abbrevs = world.cache.abbreviations
+    //     const abbrevs = {};
+    //
+    //     let text = initialText || '';
+    //     text = String(text);
+    //     const sentences = [];
+    //
+    //     // First do a greedy-split..
+    //     const chunks = [];
+    //
+    //     // Ensure it 'smells like' a sentence
+    //     if (!text || typeof text !== 'string' || hasSomething.test(text) === false) {
+    //         return sentences;
+    //     }
+    //
+    //     // cleanup unicode-spaces
+    //     text = text.replace('\xa0', ' ');
+    //
+    //     // Start somewhere:
+    //     const splits = naiiveSplit(text);
+    //
+    //     // Filter-out the crap ones
+    //     for (let i = 0; i < splits.length; ++i) {
+    //         const s = splits[i];
+    //         if (s !== undefined && s !== '') {
+    //             // this is meaningful whitespace
+    //             if (hasSomething.test(s) === false) {
+    //                 // add it to the last one
+    //                 if (chunks[chunks.length - 1]) {
+    //                     chunks[chunks.length - 1] += s;
+    //                 } else if (splits[i + 1]) {
+    //                     // add it to the next one
+    //                     splits[i + 1] = s + splits[i + 1];
+    //                 } else {
+    //                     chunks.push(s);
+    //                 }
+    //             } else {
+    //                 // else, only whitespace, no terms, no sentence
+    //                 chunks.push(s);
+    //             }
+    //         }
+    //     }
+    //
+    //     // detection of non-sentence chunks:
+    //     // loop through these chunks, and join the non-sentence chunks back together..
+    //     for (let i = 0; i < chunks.length; ++i) {
+    //         const c = chunks[i];
+    //         // should this chunk be combined with the next one?
+    //         if (chunks[i + 1] && isSentence(c, abbrevs) === false) {
+    //             chunks[i + 1] = c + (chunks[i + 1] || '');
+    //         } else if (c && c.length > 0) {
+    //             // && hasLetter.test(c)
+    //             // this chunk is a proper sentence..
+    //             sentences.push(c);
+    //             chunks[i] = '';
+    //         }
+    //     }
+    //     // if we never got a sentence, return the given text
+    //     if (!sentences.length) {
+    //         return [text];
+    //     }
+    //
+    //     // move whitespace to the ends of sentences, when possible
+    //     // ['hello',' world'] -> ['hello ','world']
+    //     for (let i = 1; i < sentences.length; i += 1) {
+    //         const ws = sentences[i].match(startWhitespace);
+    //         if (ws !== null) {
+    //             sentences[i - 1] += ws[0];
+    //             sentences[i] = sentences[i].replace(startWhitespace, '');
+    //         }
+    //     }
+    //     return sentences;
+    // };
 }(typeof global !== 'undefined' ? global : window, document));

@@ -7,19 +7,19 @@
     </head>
     <body>
         <main>
-            <section class="spkbl">
+            <section class="spkbl" data-spkbl-multivoice="0">
                 <h1 lang="en">Speakable Test</h1>
                 <p>Dies ist ein Typoblindtext. <span>An ihm kann man sehen, ob alle Buchstaben da sind und wie sie aussehen.</span>
                     Manchmal benutzt man Worte wie Hamburgefonts, Rafgenduks oder <span lang="en">Handgloves</span>, um
                     Schriften zu testen. Manchmal Sätze, die alle Buchstaben des Alphabets enthalten — man nennt diese
                     Sätze »Pangrams«. Sehr bekannt ist dieser:
                 <blockquote lang="en">The quick brown fox jumps over the lazy old dog.</blockquote>
-                Oft werden in Typoblindtexte auch fremdsprachige Satzteile eingebaut (<span lang="en">AVAIL® and Wefox™
+                <p>Oft werden in Typoblindtexte auch fremdsprachige Satzteile eingebaut (<span lang="en">AVAIL® and Wefox™
                                     are testing aussi la Kerning</span>), um die Wirkung in anderen Sprachen zu
                 testen.</p>
             </section>
 
-            <section class="spkbl row">
+            <section class="spkbl row" data-spkbl-l18n-play="Abspielen">
                 <h1 class="col-xs-12">Barrierefreie Angebote im TV und online</h1>
                 <div class="col-xs-12 col-md-10 col-md-offset-2">
                     <p>Barrierefreie Angebote ermöglichen vor allem Menschen mit Behinderung eine gleichberechtigte
@@ -57,12 +57,10 @@
             Speakable.init({
                 multivoice: true,
                 l18n: {
-                    ctrl: {
-                        play: 'Text vorlesen',
-                        pause: 'Pause',
-                        progress: 'Fortschritt',
-                        stop: 'Schließen'
-                    }
+                    play: 'Text vorlesen',
+                    pause: 'Pause',
+                    progress: 'Fortschritt',
+                    stop: 'Schließen'
                 }
             });
         </script>
