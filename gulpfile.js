@@ -12,18 +12,18 @@ exports.default = function () {
         { ignoreInitial: false },
         function (cb) {
             src('src/spkbl.js')
-            .pipe(
-                typescript(
-                    {
-                        target: 'ES5',
-                        allowJs: true
-                    }
+                .pipe(
+                    typescript(
+                        {
+                            target: 'ES5',
+                            allowJs: true
+                        }
+                    )
                 )
-            )
-            .pipe(dest('dist'))
-            .pipe(uglify())
-            .pipe(rename(path => path.basename += '.min'))
-            .pipe(dest('dist'));
+                .pipe(dest('dist'))
+                .pipe(uglify())
+                .pipe(rename(path => path.basename += '.min'))
+                .pipe(dest('dist'));
             cb();
         }
     );
@@ -31,8 +31,9 @@ exports.default = function () {
         'src/**/*.scss',
         function (cb) {
             src('src/spkbl.scss')
-            .pipe(sass().on('error', sass.logError))
-            .pipe(dest('dist'));
+                .pipe(sass({ outputStyle: 'compressed' })
+                    .on('error', sass.logError))
+                .pipe(dest('dist'));
             cb();
         }
     );

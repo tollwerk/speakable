@@ -18,7 +18,7 @@
      *
      * @type {RegExp}
      */
-    const punctuation = /[’'‘`“”"[\](){}…,.!;?\-:\u0964\u0965]/;
+    const punctuation = /[’'‘`“”"[\](){}…,.!;?\-:\u0964\u0965]\s*$/;
 
     /**
      * Default options
@@ -126,7 +126,33 @@
     }
 
     /**
-     * Parse an element
+     * Recursively parse an element
+     *
+     * The method recursively traverses the DOM, collects readable elements, determines their language, filters out
+     * elements that should be skipped and extracts the readable text. The result is a hierarchichal structure of
+     * readable elements, stored in the parser's .items property, somewhat looking like this:
+     *
+     * items = [
+     *     {
+     *         lang: "en",
+     *         node: text, // DOM node reference
+     *         type: 0,
+     *         text: "Readable text"
+     *     },
+     *     {
+     *         lang: "en",
+     *         node: p, // DOM node reference
+     *         type: 2,
+     *         items: [...]
+     *     },
+     *     ...
+     * ]
+     *
+     * The "type" value specifies the item type:
+     *
+     * 0: Text node
+     * 1: Inline element
+     * 2: Block element
      *
      * @param {Element} element Element
      *
@@ -148,9 +174,9 @@
                         );
                     }
                 } else if (c.nodeType === Element.TEXT_NODE) {
-                    const text = c.nodeValue.trim()
-                        .replace(/[\s\r\n]+/g, ' ');
-                    if (text.length) {
+                    let text = c.nodeValue;
+                    if (text.trim().length) {
+                        text = text.replace(/[\s\r\n]+/g, ' ');
                         this.items.push({
                             type: 0,
                             lang: this.lang,
@@ -162,20 +188,6 @@
             }
         );
         return this.items;
-    };
-
-    /**
-     * Create a new sentence
-     *
-     * @param {String} lang Language
-     *
-     * @return {{chunks: [], lang: *}}
-     */
-    AstParser.prototype.createSentence = function createSentence(lang) {
-        return {
-            lang,
-            chunks: []
-        };
     };
 
     /**
@@ -268,6 +280,26 @@
     };
 
     /**
+     * Collapse a chunk's text nodes and build a node source map
+     *
+     * @param {Object} chunk Chunk
+     *
+     * @return {{sourcemap: {}, text: string, lang: string}}
+     */
+    AstParser.prototype.map = function map(chunk) {
+        const mappedChunk = {
+            lang: chunk.lang,
+            text: '',
+            map: new Map()
+        };
+        chunk.chunks.forEach((c) => {
+            mappedChunk.map.set(mappedChunk.text.length, c.node);
+            mappedChunk.text += c.text;
+        });
+        return mappedChunk;
+    };
+
+    /**
      * Parse an element and return consolidated readable chunks
      *
      * @param {Element} element Element
@@ -280,30 +312,29 @@
             return [];
         }
 
-        const consolidated = [chunks.shift()];
-        while (chunks.length) {
-            const chunk = chunks.shift();
+        // Run through all chunks, collapse the text nodes and build corresponding sourcemaps
+        const chunkMaps = chunks.map(this.map);
+
+        const consolidated = [chunkMaps.shift()];
+        while (chunkMaps.length) {
+            const chunk = chunkMaps.shift();
             const last = consolidated.length - 1;
             if (chunk.lang === consolidated[last].lang) {
-                Array.prototype.push.apply(consolidated[last].chunks, chunk.chunks);
+                if (!punctuation.test(consolidated[last].text)) {
+                    consolidated[last].text += '.';
+                }
+                consolidated[last].text = consolidated[last].text.trim() + ' ';
+                const offset = consolidated[last].text.length;
+                consolidated[last].text += chunk.text;
+                chunk.map.forEach((value, key) => {
+                    consolidated[last].map.set(offset + key, value);
+                });
+
             } else {
                 consolidated.push(chunk);
             }
         }
-        consolidated.forEach(
-            (c) => {
-                let char = 0;
-                c.chunks.forEach(
-                    (chunk) => {
-                        chunk.char = char;
-                        if (!punctuation.test(chunk.text.substr(-1))) {
-                            chunk.text += '.';
-                        }
-                        char += chunk.text.length + 1;
-                    }
-                );
-            }
-        );
+
         return consolidated;
     };
 
@@ -435,8 +466,6 @@
         this.length = 0;
         this.utterances = utterances.map(
             (u) => {
-                u.text = u.chunks.map((c) => c.text)
-                    .join(' ');
                 u.length = u.text.length;
                 this.length += u.length + 1;
                 return u;

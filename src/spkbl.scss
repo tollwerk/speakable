@@ -57,7 +57,10 @@
         background-color: #919191;
     }
 
-    &::-moz-progress-bar,
+    &::-moz-progress-bar {
+        background-color: #000;
+    }
+
     &::-webkit-progress-value {
         background-color: #000;
     }

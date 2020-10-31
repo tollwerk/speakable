@@ -35,15 +35,12 @@
                 bekannt ist dieser: <span data-spkbl-skip>The quick brown fox jumps over the lazy old dog.</span> Oft
                 werden in Typoblindtexte auch fremdsprachige Satzteile eingebaut (AVAIL® and Wefox™ are testing aussi la
                 Kerning), um die Wirkung in anderen Sprachen zu testen.</p>
-        </main>
-        <aside>
-            <div class="spkbl-player" role="group" hidden>
-                <button type="button" class="spkbl-ctrl--play">Text vorlesen</button>
-                <button type="button" class="spkbl-ctrl--pause">Pause</button>
-                <input class="spkbl-ctrl--pause" type="range" min="0" max="100" value="0" aria-label="Fortschritt"/>
-                <button type="button" class="spkbl-ctrl--close">Schließen</button>
+
+            <div class="spkbl">
+                <p>In diesem <strong>T</strong>ext werden <strong>A</strong>nfangsbuchstaben hervorgehoben.</p>
+                <div><p>Im zweiten Absatz allerdings <span>finden sich keine solchen</span> Hervorhebungen.</p></div>
             </div>
-        </aside>
+        </main>
         <script src="../dist/spkbl.js"></script>
         <script>
             Speakable.init({

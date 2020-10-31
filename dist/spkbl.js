@@ -24,7 +24,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @type {RegExp}
      */
-    var punctuation = /[’'‘`“”"[\](){}…,.!;?\-:\u0964\u0965]/;
+    var punctuation = /[’'‘`“”"[\](){}…,.!;?\-:\u0964\u0965]\s*$/;
     /**
      * Default options
      *
@@ -76,7 +76,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      * @param target Target object
      * @param sources Source object(s)
      */
-    function mergeDeep(target) {
+    function mergeDeep(target, ...sources) {
         var _a, _b;
         var sources = [];
         for (var _i = 1; _i < arguments.length; _i++) {
@@ -129,7 +129,33 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         this.items = [];
     }
     /**
-     * Parse an element
+     * Recursively parse an element
+     *
+     * The method recursively traverses the DOM, collects readable elements, determines their language, filters out
+     * elements that should be skipped and extracts the readable text. The result is a hierarchichal structure of
+     * readable elements, stored in the parser's .items property, somewhat looking like this:
+     *
+     * items = [
+     *     {
+     *         lang: "en",
+     *         node: text, // DOM node reference
+     *         type: 0,
+     *         text: "Readable text"
+     *     },
+     *     {
+     *         lang: "en",
+     *         node: p, // DOM node reference
+     *         type: 2,
+     *         items: [...]
+     *     },
+     *     ...
+     * ]
+     *
+     * The "type" value specifies the item type:
+     *
+     * 0: Text node
+     * 1: Inline element
+     * 2: Block element
      *
      * @param {Element} element Element
      *
@@ -150,9 +176,9 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                 }
             }
             else if (c.nodeType === Element.TEXT_NODE) {
-                var text = c.nodeValue.trim()
-                    .replace(/[\s\r\n]+/g, ' ');
-                if (text.length) {
+                var text = c.nodeValue;
+                if (text.trim().length) {
+                    text = text.replace(/[\s\r\n]+/g, ' ');
                     _this.items.push({
                         type: 0,
                         lang: _this.lang,
@@ -163,19 +189,6 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
             }
         });
         return this.items;
-    };
-    /**
-     * Create a new sentence
-     *
-     * @param {String} lang Language
-     *
-     * @return {{chunks: [], lang: *}}
-     */
-    AstParser.prototype.createSentence = function createSentence(lang) {
-        return {
-            lang: lang,
-            chunks: []
-        };
     };
     /**
      * Create a new sentence
@@ -268,6 +281,25 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         return chunks;
     };
     /**
+     * Collapse a chunk's text nodes and build a node source map
+     *
+     * @param {Object} chunk Chunk
+     *
+     * @return {{sourcemap: {}, text: string, lang: string}}
+     */
+    AstParser.prototype.map = function map(chunk) {
+        var mappedChunk = {
+            lang: chunk.lang,
+            text: '',
+            map: new Map()
+        };
+        chunk.chunks.forEach(function (c) {
+            mappedChunk.map.set(mappedChunk.text.length, c.node);
+            mappedChunk.text += c.text;
+        });
+        return mappedChunk;
+    };
+    /**
      * Parse an element and return consolidated readable chunks
      *
      * @param {Element} element Element
@@ -279,27 +311,30 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         if (!chunks.length) {
             return [];
         }
-        var consolidated = [chunks.shift()];
-        while (chunks.length) {
-            var chunk = chunks.shift();
+        // Run through all chunks, collapse the text nodes and build corresponding sourcemaps
+        var chunkMaps = chunks.map(this.map);
+        var consolidated = [chunkMaps.shift()];
+        var _loop_1 = function () {
+            var chunk = chunkMaps.shift();
             var last = consolidated.length - 1;
             if (chunk.lang === consolidated[last].lang) {
-                Array.prototype.push.apply(consolidated[last].chunks, chunk.chunks);
+                if (!punctuation.test(consolidated[last].text)) {
+                    consolidated[last].text += '.';
+                }
+                consolidated[last].text = consolidated[last].text.trim() + ' ';
+                var offset_1 = consolidated[last].text.length;
+                consolidated[last].text += chunk.text;
+                chunk.map.forEach(function (value, key) {
+                    consolidated[last].map.set(offset_1 + key, value);
+                });
             }
             else {
                 consolidated.push(chunk);
             }
+        };
+        while (chunkMaps.length) {
+            _loop_1();
         }
-        consolidated.forEach(function (c) {
-            var char = 0;
-            c.chunks.forEach(function (chunk) {
-                chunk.char = char;
-                if (!punctuation.test(chunk.text.substr(-1))) {
-                    chunk.text += '.';
-                }
-                char += chunk.text.length + 1;
-            });
-        });
         return consolidated;
     };
     /**
@@ -422,8 +457,6 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         var _this = this;
         this.length = 0;
         this.utterances = utterances.map(function (u) {
-            u.text = u.chunks.map(function (c) { return c.text; })
-                .join(' ');
             u.length = u.text.length;
             _this.length += u.length + 1;
             return u;
