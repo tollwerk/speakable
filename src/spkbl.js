@@ -293,6 +293,10 @@
             map: new Map()
         };
         chunk.chunks.forEach((c) => {
+            // const wrap = d.createElementNS('https://tollwerk.de/speakable/1.0', 's:s');
+            // c.node.after(wrap);
+            // wrap.appendChild(c.node);
+            // mappedChunk.map.set(mappedChunk.text.length, wrap);
             mappedChunk.map.set(mappedChunk.text.length, c.node);
             mappedChunk.text += c.text;
         });

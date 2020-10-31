@@ -76,7 +76,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      * @param target Target object
      * @param sources Source object(s)
      */
-    function mergeDeep(target, ...sources) {
+    function mergeDeep(target) {
         var _a, _b;
         var sources = [];
         for (var _i = 1; _i < arguments.length; _i++) {
@@ -294,6 +294,10 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
             map: new Map()
         };
         chunk.chunks.forEach(function (c) {
+            // const wrap = d.createElementNS('https://tollwerk.de/speakable/1.0', 's:s');
+            // c.node.after(wrap);
+            // wrap.appendChild(c.node);
+            // mappedChunk.map.set(mappedChunk.text.length, wrap);
             mappedChunk.map.set(mappedChunk.text.length, c.node);
             mappedChunk.text += c.text;
         });
