@@ -665,7 +665,6 @@
 
             // Safari iOS doesn't support the addEventListener() method for the speechSynthesis
             if (speechSynthesis.addEventListener) {
-                console.log('asynchronous');
                 speechSynthesis.addEventListener('voiceschanged', function () {
                     voices = speechSynthesis.getVoices();
                 });
