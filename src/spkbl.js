@@ -551,9 +551,11 @@
      */
     Speakable.prototype.getUtteranceVoice = function getUtteranceVoice(utterance) {
         if (!utterance.voice) {
-            utterance.voice = voices.find((v) => (v.lang === utterance.lang) || v.lang.startsWith(`${utterance.lang}-`))
-                || voices.find((v) => v.default)
-                || voices[0];
+            const locale = utterance.lang;
+            const lang = locale.split('-')
+                .shift();
+            utterance.voice = voices.find((v) => (v.lang === locale) || (v.lang === lang) || v.lang.startsWith(`${locale}-`) || v.lang.startsWith(`${lang}-`))
+                || voices.find((v) => v.default) || voices[0];
         }
         return utterance.voice;
     };

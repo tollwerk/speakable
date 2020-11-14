@@ -535,9 +535,11 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      */
     Speakable.prototype.getUtteranceVoice = function getUtteranceVoice(utterance) {
         if (!utterance.voice) {
-            utterance.voice = voices.find(function (v) { return (v.lang === utterance.lang) || v.lang.startsWith(utterance.lang + "-"); })
-                || voices.find(function (v) { return v.default; })
-                || voices[0];
+            var locale_1 = utterance.lang;
+            var lang_1 = locale_1.split('-')
+                .shift();
+            utterance.voice = voices.find(function (v) { return (v.lang === locale_1) || (v.lang === lang_1) || v.lang.startsWith(locale_1 + "-") || v.lang.startsWith(lang_1 + "-"); })
+                || voices.find(function (v) { return v.default; }) || voices[0];
         }
         return utterance.voice;
     };
