@@ -662,12 +662,14 @@
             speechUtterance.pitch = 1;
             speechUtterance.rate = 1;
             voices = speechSynthesis.getVoices();
-            speechSynthesis.addEventListener(
-                'voiceschanged',
-                () => {
+
+            // Safari iOS doesn't support the addEventListener() method for the speechSynthesis
+            if (speechSynthesis.addEventListener) {
+                console.log('asynchronous');
+                speechSynthesis.addEventListener('voiceschanged', function () {
                     voices = speechSynthesis.getVoices();
-                }
-            );
+                });
+            }
 
             const opts = mergeDeep(defaultOptions, options);
             const selector = opts.selector || '';

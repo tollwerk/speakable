@@ -638,9 +638,13 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
             speechUtterance.pitch = 1;
             speechUtterance.rate = 1;
             voices = speechSynthesis.getVoices();
-            speechSynthesis.addEventListener('voiceschanged', function () {
-                voices = speechSynthesis.getVoices();
-            });
+            // Safari iOS doesn't support the addEventListener() method for the speechSynthesis
+            if (speechSynthesis.addEventListener) {
+                console.log('asynchronous');
+                speechSynthesis.addEventListener('voiceschanged', function () {
+                    voices = speechSynthesis.getVoices();
+                });
+            }
             var opts_1 = mergeDeep(defaultOptions, options);
             var selector = opts_1.selector || '';
             delete opts_1.selector;
