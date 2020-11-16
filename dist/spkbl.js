@@ -186,7 +186,6 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                 if (text.trim().length) {
                     text = text.replace(/[\s\r\n]+/g, ' ');
                     text = text.replace(dontspeak, '');
-                    console.log(text);
                     _this.items.push({
                         type: 0,
                         lang: _this.lang,

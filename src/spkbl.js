@@ -184,7 +184,6 @@
                     if (text.trim().length) {
                         text = text.replace(/[\s\r\n]+/g, ' ');
                         text = text.replace(dontspeak, '');
-                        console.log(text);
                         this.items.push({
                             type: 0,
                             lang: this.lang,
