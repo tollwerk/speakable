@@ -1,3 +1,4 @@
+/* Speakable Text-To-Speech player 1.0.0 | https://github.com/tollwerk/speakable */
 var __spreadArrays = (this && this.__spreadArrays) || function () {
     for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
     for (var r = Array(s), k = 0, i = 0; i < il; i++)

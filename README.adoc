@@ -1,5 +1,131 @@
 = speakable
 
+is a simple Text-To-Speech player and website screenreader using the native JavaScript Web Speech API.
+
+== Usage
+
+Start by adding the speakable JavaScript library to your HTML document. You may also want to use the default player CSS, but you might as well replace or extend it with your own styles. Please find the files in the `dist` directory of https://github.com/tollwerk/speakable[speakable's Github repository] (use `spkbl.min.js` for a minified script version):
+
+[source,html]
+----
+<html lang="en">
+    <head>
+        <title>Example page</title>
+        <link rel="stylesheet" href="spkbl.css">
+    </head>
+    <body>
+        <!-- ... -->
+        <script src="spkbl.min.js"></script>
+        <script>
+            /* Initialization, see below */
+        </script>
+    </body>
+</html>
+----
+
+Next, add speakable sections to your page by assigning the `spkbl` CSS class to suitable HTML elements:
+
+[source,html]
+----
+<section class="spkbl">
+    <h2>This is a speakable section</h2>
+    <p>The player will read all the text inside the section.</p>
+</section>
+----
+
+Finally, the players on your page need to be initialized:
+
+[source,html]
+----
+<script>
+    if ('Speakable' in window) {
+        Speakable.init();
+    }
+</script>
+----
+
+Your page should now display one player for each speakable section. Initialization takes an optional configuration object as single argument (<<options,see below for details>>). Config values provided like this will *apply to all players* on the page:
+
+[source,html]
+----
+<script>
+    if ('Speakable' in window) {
+        Speakable.init({
+            multivoice: true,
+            l18n: {
+                play: 'Text vorlesen',
+                pause: 'Pause',
+                progress: 'Fortschritt',
+                stop: 'Schließen'
+            }
+        });
+    }
+</script>
+----
+
+Alternatively, you can provide most of the options *on per-player basis* as well by adding them as data attributes (prefixed by `data-spkbl-`):
+
+[source,html]
+----
+<section class="spkbl" data-spkbl-multivoice="false" data-spkbl-l18n-play="Abspielen">
+    <h2>This is a speakable section</h2>
+    <p>The player will read all the text inside the section.</p>
+</section>
+----
+
+[[options]]
+== Options
+
+The currently supported options are:
+
+[width="100%",cols="2,4,1,1,1",frame="none",options="header"]
+|=======
+|Name|Description|Default|init()|`data-*`
+|selector|CSS class to use for finding speakable elements|`"spkbl"`|Yes|—
+|multivoice|Look out for `lang` attributes on contained elements and try to use the most appropriate voice available for a particular language|`true`|Yes|Yes
+|hidden|Hide the player for assistive technology (via `aria-hidden="true"`)|`true`|Yes|Yes
+|l18n|Language labels|—|—|—
+|l18n.play|Play button label|`"Read text"`|Yes|Yes
+|l18n.pause|Pause / resume button label|`"Pause"`|Yes|Yes
+|l18n.progress|Progress bar label|`"Progress"`|Yes|Yes
+|l18n.stop|Stop button label|`"Stop"`|Yes|Yes
+|=======
+
+== Known problems
+
+Currently there are no known problems.
+However, the module is in a very early stage and might have severe bugs.
+Please let us know if you spot one!
+
+== To-do
+
+* Add a demo page
+* Add tests
+* Add visual highlighting of text currently being read
+
+== Changelog
+
+Please refer to the link:CHANGELOG.adoc[changelog] for a complete release history.
+
+== Contributing
+
+Found a bug or have a feature request? https://github.com/tollwerk/speakable/issues[Please have a look at the known issues] first and open a new issue if necessary.
+Please see link:CONDUCT.adoc[conduct] for details.
+
+== Security
+
+If you discover any security related issues, please email info@tollwerk.de instead of using the issue tracker.
+
+== Credits
+
+* https://tollwerk.de[Joschi Kuphal]
+* link:../../contributors[All Contributors]
+
+== Legal
+
+Copyright © 2020 tollwerk GmbH <info@tollwerk.de> / https://twitter.com/tollwerk[@tollwerk]. +
+*speakable* is licensed under the terms of the link:LICENSE[MIT license].
+
 == Stoffsammlung
 
 * Gliedern von Texten in Sätze und Wörter
@@ -10,7 +136,8 @@
 ** https://github.com/winkjs/wink-tokenizer/blob/master/src/wink-tokenizer.js
 ** https://www.quora.com/Are-there-any-JavaScript-natural-language-processing-projects
 ** Anhand welcher Kriterien?
-* Markieren mit extra HTML-Elementen, die neutral sind. ReadSpeaker nimmt Elemente in einem eigenen (undeklarierten?) Namensraum `<rs:span>`, die jeweils eine ID und CSS-Klassen haben, wenn Sie hervorgehoben werden sollen (beim Lesen).
+* Markieren mit extra HTML-Elementen, die neutral sind.
+ReadSpeaker nimmt Elemente in einem eigenen (undeklarierten?) Namensraum `<rs:span>`, die jeweils eine ID und CSS-Klassen haben, wenn Sie hervorgehoben werden sollen (beim Lesen).
 * Player
 ** Play / Pause
 ** Scrubber
