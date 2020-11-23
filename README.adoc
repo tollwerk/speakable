@@ -125,22 +125,3 @@ If you discover any security related issues, please email info@tollwerk.de inste
 
 Copyright © 2020 tollwerk GmbH <info@tollwerk.de> / https://twitter.com/tollwerk[@tollwerk]. +
 *speakable* is licensed under the terms of the link:LICENSE[MIT license].
-
-== Stoffsammlung
-
-* Gliedern von Texten in Sätze und Wörter
-** https://rocketloop.de/vorverarbeitung-von-text-fuer-machine-learning-in-node-js/
-** https://observablehq.com/@spencermountain/compromise-tokenization
-** https://github.com/NaturalNode/natural
-** https://github.com/winkjs/wink-tokenizer
-** https://github.com/winkjs/wink-tokenizer/blob/master/src/wink-tokenizer.js
-** https://www.quora.com/Are-there-any-JavaScript-natural-language-processing-projects
-** Anhand welcher Kriterien?
-* Markieren mit extra HTML-Elementen, die neutral sind.
-ReadSpeaker nimmt Elemente in einem eigenen (undeklarierten?) Namensraum `<rs:span>`, die jeweils eine ID und CSS-Klassen haben, wenn Sie hervorgehoben werden sollen (beim Lesen).
-* Player
-** Play / Pause
-** Scrubber
-** Lautstärkensteuerung
-** Schließen
-** Download? https://stackoverflow.com/questions/45003548/how-to-capture-generated-audio-from-window-speechsynthesis-speak-call

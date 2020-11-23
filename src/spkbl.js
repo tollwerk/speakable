@@ -24,7 +24,7 @@
      *
      * @type {RegExp}
      */
-    const dontspeak = /[·*]|(?:(?<=\w):(?=\w))/gi;
+    const dontspeak = /[·‧*]|(?:(?<=\w):(?=\w))/gi;
 
     /**
      * Default options
@@ -334,13 +334,12 @@
                 if (!punctuation.test(consolidated[last].text)) {
                     consolidated[last].text += '.';
                 }
-                consolidated[last].text = consolidated[last].text.trim() + ' ';
+                consolidated[last].text = `${consolidated[last].text.trim()} `;
                 const offset = consolidated[last].text.length;
                 consolidated[last].text += chunk.text;
                 chunk.map.forEach((value, key) => {
                     consolidated[last].map.set(offset + key, value);
                 });
-
             } else {
                 consolidated.push(chunk);
             }
@@ -561,7 +560,8 @@
             const locale = utterance.lang;
             const lang = locale.split('-')
                 .shift();
-            utterance.voice = voices.find((v) => (v.lang === locale) || (v.lang === lang) || v.lang.startsWith(`${locale}-`) || v.lang.startsWith(`${lang}-`))
+            utterance.voice = voices.find((v) => (v.lang === locale) || (v.lang === lang)
+                || v.lang.startsWith(`${locale}-`) || v.lang.startsWith(`${lang}-`))
                 || voices.find((v) => v.default) || voices[0];
         }
         return utterance.voice;
@@ -674,7 +674,7 @@
 
             // Safari iOS doesn't support the addEventListener() method for the speechSynthesis
             if (speechSynthesis.addEventListener) {
-                speechSynthesis.addEventListener('voiceschanged', function () {
+                speechSynthesis.addEventListener('voiceschanged', () => {
                     voices = speechSynthesis.getVoices();
                 });
             }
@@ -694,147 +694,4 @@
     } else {
         w.Speakable = Speakable;
     }
-
-    // // Sentence splitting
-    // const initSplit = /(\S.+?[.!?\u203D\u2E18\u203C\u2047-\u2049])(?=\s+|$)/g;
-    // const hasSomething = /\S/;
-    // const isAcronym = /[ .][A-Z]\.? *$/i;
-    // const hasEllipse = /(?:\u2026|\.{2,}) *$/;
-    // const newLine = /((?:\r?\n|\r)+)/; // Match different new-line formats
-    // const hasLetter = new ReqExp('[a-z0-9\\u00C0-\\u00FF\\u00a9|\\u00ae|[\\u2000-\\u3300]|\\ud83c[\\ud000-\\udfff]' +
-    //     '|\\ud83d[\\ud000-\\udfff]|\\ud83e[\\ud000-\\udfff]', 'i');
-    // const startWhitespace = /^\s+/;
-    // /**
-    //  * Naiive splitting
-    //  *
-    //  * @param {String} text Text
-    //  *
-    //  * @returns {[]} Sentences
-    //  */
-    // function naiiveSplit(text) {
-    //     const all = [];
-    //     const lines = text.split(newLine);
-    //     for (let i = 0; i < lines.length; ++i) {
-    //         const arr = lines[i].split(initSplit);
-    //         for (let o = 0; o < arr.length; ++o) {
-    //             all.push(arr[o]);
-    //         }
-    //     }
-    //     return all;
-    // }
-    //
-    // /**
-    //  * Test if a string is a sentence
-    //  *
-    //  * @param {String} str Text
-    //  * @param {Object} abbrevs Abbreviations
-    //  *
-    //  * @returns {boolean} Looks like a sentence
-    //  */
-    // function isSentence(str, abbrevs) {
-    //     // check for 'F.B.I.'
-    //     if (isAcronym.test(str) === true) {
-    //         return false;
-    //     }
-    //     // check for '...'
-    //     if (hasEllipse.test(str) === true) {
-    //         return false;
-    //     }
-    //     // must have a letter
-    //     if (hasLetter.test(str) === false) {
-    //         return false;
-    //     }
-    //
-    //     const txt = str.replace(/[.!?\u203D\u2E18\u203C\u2047-\u2049] *$/, '');
-    //     const words = txt.split(' ');
-    //     const lastWord = words[words.length - 1].toLowerCase();
-    //
-    //     // check for 'Mr.'
-    //     if (Object.prototype.hasOwnProperty.call(abbrevs, lastWord)) {
-    //         return false;
-    //     }
-    //     return true;
-    // }
-    //
-    // /**
-    //  * Split a text into sentences
-    //  *
-    //  * @param {String} initialText Text
-    //  *
-    //  * @returns {string[]|[]} Sentences
-    //  */
-    // const splitSentences = function splitSentences(initialText) {
-    //     // let abbrevs = world.cache.abbreviations
-    //     const abbrevs = {};
-    //
-    //     let text = initialText || '';
-    //     text = String(text);
-    //     const sentences = [];
-    //
-    //     // First do a greedy-split..
-    //     const chunks = [];
-    //
-    //     // Ensure it 'smells like' a sentence
-    //     if (!text || typeof text !== 'string' || hasSomething.test(text) === false) {
-    //         return sentences;
-    //     }
-    //
-    //     // cleanup unicode-spaces
-    //     text = text.replace('\xa0', ' ');
-    //
-    //     // Start somewhere:
-    //     const splits = naiiveSplit(text);
-    //
-    //     // Filter-out the crap ones
-    //     for (let i = 0; i < splits.length; ++i) {
-    //         const s = splits[i];
-    //         if (s !== undefined && s !== '') {
-    //             // this is meaningful whitespace
-    //             if (hasSomething.test(s) === false) {
-    //                 // add it to the last one
-    //                 if (chunks[chunks.length - 1]) {
-    //                     chunks[chunks.length - 1] += s;
-    //                 } else if (splits[i + 1]) {
-    //                     // add it to the next one
-    //                     splits[i + 1] = s + splits[i + 1];
-    //                 } else {
-    //                     chunks.push(s);
-    //                 }
-    //             } else {
-    //                 // else, only whitespace, no terms, no sentence
-    //                 chunks.push(s);
-    //             }
-    //         }
-    //     }
-    //
-    //     // detection of non-sentence chunks:
-    //     // loop through these chunks, and join the non-sentence chunks back together..
-    //     for (let i = 0; i < chunks.length; ++i) {
-    //         const c = chunks[i];
-    //         // should this chunk be combined with the next one?
-    //         if (chunks[i + 1] && isSentence(c, abbrevs) === false) {
-    //             chunks[i + 1] = c + (chunks[i + 1] || '');
-    //         } else if (c && c.length > 0) {
-    //             // && hasLetter.test(c)
-    //             // this chunk is a proper sentence..
-    //             sentences.push(c);
-    //             chunks[i] = '';
-    //         }
-    //     }
-    //     // if we never got a sentence, return the given text
-    //     if (!sentences.length) {
-    //         return [text];
-    //     }
-    //
-    //     // move whitespace to the ends of sentences, when possible
-    //     // ['hello',' world'] -> ['hello ','world']
-    //     for (let i = 1; i < sentences.length; i += 1) {
-    //         const ws = sentences[i].match(startWhitespace);
-    //         if (ws !== null) {
-    //             sentences[i - 1] += ws[0];
-    //             sentences[i] = sentences[i].replace(startWhitespace, '');
-    //         }
-    //     }
-    //     return sentences;
-    // };
 }(typeof global !== 'undefined' ? global : window, document));
