@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on https://keepachangelog.com/en/1.0.0/[Keep a Changelog],
 and this project adheres to https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
+== [Unreleased]
+=== Changed
+- Remove negative lookbehind assertion from regex to support older browsers
+
 == [0.1.0-pre] - 2020-11-23
 === Added
 - Initial commit

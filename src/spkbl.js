@@ -24,7 +24,7 @@
      *
      * @type {RegExp}
      */
-    const dontspeak = /[·‧*]|(?:(?<=\w):(?=\w))/gi;
+    const dontspeak = /(\w)[·‧*:](\w)/gi;
 
     /**
      * Default options
@@ -183,7 +183,7 @@
                     let text = c.nodeValue;
                     if (text.trim().length) {
                         text = text.replace(/[\s\r\n]+/g, ' ');
-                        text = text.replace(dontspeak, '');
+                        text = text.replace(dontspeak, '$1$2');
                         this.items.push({
                             type: 0,
                             lang: this.lang,

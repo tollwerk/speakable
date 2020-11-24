@@ -31,7 +31,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      *
      * @type {RegExp}
      */
-    var dontspeak = /[·‧*]|(?:(?<=\w):(?=\w))/gi;
+    var dontspeak = /(\w)[·‧*:](\w)/gi;
     /**
      * Default options
      *
@@ -186,7 +186,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                 var text = c.nodeValue;
                 if (text.trim().length) {
                     text = text.replace(/[\s\r\n]+/g, ' ');
-                    text = text.replace(dontspeak, '');
+                    text = text.replace(dontspeak, '$1$2');
                     _this.items.push({
                         type: 0,
                         lang: _this.lang,
