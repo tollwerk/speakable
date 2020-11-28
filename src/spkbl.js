@@ -253,7 +253,27 @@
                     sentence = null;
                     break;
                 case 1:
-                    if (c.lang === sentence.lang) {
+                    if (c.node.tagName.toUpperCase() === 'BR') {
+                        const clen = sentence.chunks.length;
+                        if (clen) {
+                            const lastText = sentence.chunks[clen - 1].text;
+                            if (!punctuation.test(lastText)) {
+                                sentence.chunks.push(
+                                    {
+                                        node: c.node,
+                                        text: '. '
+                                    }
+                                );
+                            } else if (!/\s$/.test(lastText)) {
+                                sentence.chunks.push(
+                                    {
+                                        node: c.node,
+                                        text: ' '
+                                    }
+                                );
+                            }
+                        }
+                    } else if (c.lang === sentence.lang) {
                         c.items.forEach(chunksRecursive);
                     } else {
                         const { lang } = sentence;
@@ -332,7 +352,7 @@
             const last = consolidated.length - 1;
             if (chunk.lang === consolidated[last].lang) {
                 if (!punctuation.test(consolidated[last].text)) {
-                    consolidated[last].text += '.';
+                    consolidated[last].text += '. ';
                 }
                 consolidated[last].text = `${consolidated[last].text.trim()} `;
                 const offset = consolidated[last].text.length;
@@ -344,7 +364,6 @@
                 consolidated.push(chunk);
             }
         }
-
         return consolidated;
     };
 
