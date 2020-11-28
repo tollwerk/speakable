@@ -261,7 +261,7 @@
                                 sentence.chunks.push(
                                     {
                                         node: c.node,
-                                        text: '. '
+                                        text: ' . '
                                     }
                                 );
                             } else if (!/\s$/.test(lastText)) {

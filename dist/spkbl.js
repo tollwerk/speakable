@@ -264,7 +264,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                                 if (!punctuation.test(lastText)) {
                                     sentence.chunks.push({
                                         node: c.node,
-                                        text: '. '
+                                        text: ' . '
                                     });
                                 }
                                 else if (!/\s$/.test(lastText)) {

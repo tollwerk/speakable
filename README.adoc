@@ -1,6 +1,6 @@
 = speakable
 
-is a simple Text-To-Speech player and website screenreader using the native JavaScript Web Speech API.
+is a simple and privacy friendly Text-To-Speech player and website screenreader using the native JavaScript Web Speech API.
 
 == Usage
 
