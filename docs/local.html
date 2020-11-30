@@ -54,14 +54,34 @@
                     mehrere Blockelemente ineinandergeschachtelt. Auch das sollte den Lesefluss nicht stören.</p></div>
             </div>
 
-            <div class="spkbl">
+            <div class="spkbl" data-spkbl-player="customPlayer">
                 <p>Dieser Text nutzt weiche Zeilenumbrüche<br>Der Screenreader sollte am Zeilenende eine hörbare Pause
                     machen und vor allem nicht 6000<br>000 als sechs Millionen lesen.<br>Mit Punkt am Ende einer Zeile
-                    darf die Pause aber auch nicht zu lang werden.</p>
+                    darf die Pause aber auch nicht zu lang werden. Im Übrigen nutzt der Text eine individuelle
+                    Player-Variante.</p>
             </div>
         </main>
         <script src="../dist/spkbl.js"></script>
         <script>
+            function customPlayer(spkbl) {
+                const player = {
+                    player: document.createElement('fieldset'),
+                    controls: {}
+                };
+                const legend = document.createElement('legend');
+                legend.innerHTML = 'Custom player';
+                player.player.appendChild(legend);
+                player.controls.play = player.player.appendChild(document.createElement('input'));
+                player.controls.play.value = spkbl.options.l18n.play;
+                player.controls.pause = player.player.appendChild(document.createElement('input'));
+                player.controls.pause.value = spkbl.options.l18n.pause;
+                player.controls.progress = player.player.appendChild(document.createElement('progress'));
+                player.controls.progress.innerHTML = '0%';
+                player.controls.stop = player.player.appendChild(document.createElement('input'));
+                player.controls.stop.value = spkbl.options.l18n.stop;
+                return player;
+            }
+
             Speakable.init({
                 multivoice: true,
                 l18n: {

@@ -36,6 +36,7 @@
         selector: '.spkbl',
         multivoice: true,
         hidden: false, // Hide player from assistive technology
+        player: null, // Custom player implementation (constructor function name or reference)
         l18n: {
             play: 'Read text',
             pause: 'Pause',
@@ -387,7 +388,15 @@
         this.nextOnResume = false;
         this.player = null;
         this.controls = {};
-        this.buildPlayer();
+        let factory = this.defaultPlayer;
+        if (this.options.player) {
+            if (typeof this.options.player === 'function') {
+                factory = this.options.player;
+            } else if (typeof w[this.options.player] === 'function') {
+                factory = w[this.options.player];
+            }
+        }
+        this.buildPlayer(factory);
 
         // Parse the element contents
         const astParser = new AstParser(this.determineLanguage(this.element) || 'en', this.options.multivoice);
@@ -435,38 +444,58 @@
     };
 
     /**
-     * Build the player
+     * Create the default player
      *
+     * @param {Speakable} spkbl Speakable reference
+     * @return {Object} Player elements
      * @private
      */
-    Speakable.prototype.buildPlayer = function buildPlayer() {
-        this.player = d.createElement('div');
-        this.player.className = 'spkbl-player spkbl-player--inactive';
+    Speakable.prototype.defaultPlayer = function defaultPlayer(spkbl) {
+        const player = {
+            player: d.createElement('div'),
+            controls: {}
+        };
+        player.controls.play = player.player.appendChild(d.createElement('button'));
+        player.controls.play.innerHTML = spkbl.options.l18n.play;
+        player.controls.pause = player.player.appendChild(d.createElement('button'));
+        player.controls.pause.innerHTML = spkbl.options.l18n.pause;
+        player.controls.progress = player.player.appendChild(d.createElement('progress'));
+        player.controls.progress.innerHTML = '0%';
+        player.controls.stop = player.player.appendChild(d.createElement('button'));
+        player.controls.stop.innerHTML = spkbl.options.l18n.stop;
+        return player;
+    };
+
+    /**
+     * Build the player
+     *
+     * @param {Function} factory Player factory
+     * @private
+     */
+    Speakable.prototype.buildPlayer = function buildPlayer(factory) {
+        const instance = factory(this);
+        this.player = instance.player;
+        this.controls = instance.controls;
+
+        this.player.classList.add('spkbl-player', 'spkbl-player--inactive');
         this.player.role = 'group';
         if (this.options.hidden) {
             this.player.setAttribute('aria-hidden', 'true');
         }
 
         // Play button
-        this.controls.play = d.createElement('button');
         this.controls.play.type = 'button';
-        this.controls.play.className = 'spkbl-ctrl spkbl-ctrl--play';
+        this.controls.play.classList.add('spkbl-ctrl', 'spkbl-ctrl--play');
         this.controls.play.addEventListener('click', this.play.bind(this));
-        this.controls.play.innerHTML = this.options.l18n.play;
-        this.player.appendChild(this.controls.play);
 
         // Pause button
-        this.controls.pause = d.createElement('button');
         this.controls.pause.type = 'button';
-        this.controls.pause.className = 'spkbl-ctrl spkbl-ctrl--pause';
+        this.controls.pause.classList.add('spkbl-ctrl', 'spkbl-ctrl--pause');
         this.controls.pause.addEventListener('click', this.pause.bind(this));
-        this.controls.pause.innerHTML = this.options.l18n.pause;
         this.controls.pause.setAttribute('aria-pressed', 'false');
-        this.player.appendChild(this.controls.pause);
 
         // Progress bar
-        this.controls.progress = d.createElement('progress');
-        this.controls.progress.className = 'spkbl-ctrl spkbl-ctrl--progress';
+        this.controls.progress.classList.add('spkbl-ctrl', 'spkbl-ctrl--progress');
         this.controls.progress.max = '100';
         this.controls.progress.value = '0';
         this.controls.progress.setAttribute('aria-label', this.options.l18n.progress);
@@ -475,16 +504,11 @@
         this.controls.progress.setAttribute('aria-valuemax', '100');
         this.controls.progress.setAttribute('readonly', 'true');
         this.controls.progress.setAttribute('role', 'progressbar');
-        this.controls.progress.appendChild(d.createTextNode('0%'));
-        this.player.appendChild(this.controls.progress);
 
         // Stop button
-        this.controls.stop = d.createElement('button');
         this.controls.stop.type = 'button';
-        this.controls.stop.className = 'spkbl-ctrl spkbl-ctrl--stop';
+        this.controls.stop.classList.add('spkbl-ctrl', 'spkbl-ctrl--stop');
         this.controls.stop.addEventListener('click', this.stop.bind(this));
-        this.controls.stop.innerHTML = this.options.l18n.stop;
-        this.player.appendChild(this.controls.stop);
     };
 
     /**

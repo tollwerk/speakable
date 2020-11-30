@@ -83,13 +83,34 @@ The currently supported options are:
 |Name|Description|Default|init()|`data-*`
 |selector|CSS class to use for finding speakable elements|`"spkbl"`|Yes|—
 |multivoice|Look out for `lang` attributes on contained elements and try to use the most appropriate voice available for a particular language|`true`|Yes|Yes
-|hidden|Hide the player for assistive technology (via `aria-hidden="true"`)|`true`|Yes|Yes
+|hidden|Hide the player for assistive technology (via `aria-hidden="true"`)|`false`|Yes|Yes
+|player|Custom player implementation, constructor function name or reference (<<customplayer,see below for details>>)|`null`|Yes|Yes
 |l18n|Language labels|—|—|—
 |l18n.play|Play button label|`"Read text"`|Yes|Yes
 |l18n.pause|Pause / resume button label|`"Pause"`|Yes|Yes
 |l18n.progress|Progress bar label|`"Progress"`|Yes|Yes
 |l18n.stop|Stop button label|`"Stop"`|Yes|Yes
 |=======
+
+[[customplayer]]
+== Custom player
+
+You may use a custom player implementation by passing in a factory callback (global function name or reference). The factory method will receive the `Speakable` reference as its only parameter (so you can access its `options` including the language strings). It's expected to return an object with the following items:
+
+[source,html]
+----
+{
+    player: <DOMElement>, // Overall player container
+    controls: {
+        play: <DOMElement>, // Play button (typically <button> or <input>)
+        pause: <DOMElement>, // Play button (typically <button> or <input>)
+        progress: <DOMElement>, // Progress bar (typically <progress>)
+        stop: <DOMElement>, // Play button (typically <button> or <input>)
+    }
+}
+----
+
+These DOM elements need to have everything needed for visual presentation (i.e. text content) but they will get CSS classes, event handlers and ARIA attributes added automatically.
 
 == Known problems
 
