@@ -41,7 +41,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
     var defaultOptions = {
         selector: '.spkbl',
         multivoice: true,
-        hidden: true,
+        hidden: false,
         l18n: {
             play: 'Read text',
             pause: 'Pause',
@@ -464,8 +464,11 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         this.controls.progress.max = '100';
         this.controls.progress.value = '0';
         this.controls.progress.setAttribute('aria-label', this.options.l18n.progress);
-        this.controls.progress.setAttribute('aria-hidden', 'true');
+        this.controls.progress.setAttribute('aria-valuenow', '0');
+        this.controls.progress.setAttribute('aria-valuemin', '0');
+        this.controls.progress.setAttribute('aria-valuemax', '100');
         this.controls.progress.setAttribute('readonly', 'true');
+        this.controls.progress.setAttribute('role', 'progressbar');
         this.controls.progress.appendChild(d.createTextNode('0%'));
         this.player.appendChild(this.controls.progress);
         // Stop button
@@ -578,6 +581,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
     Speakable.prototype.boundary = function boundary(e) {
         this.progress = Math.round((100 * (this.offset + e.charIndex)) / this.length);
         this.controls.progress.value = this.progress;
+        this.controls.progress.setAttribute('aria-valuenow', this.progress);
         this.controls.progress.textContent = this.progress + " % ";
         // console.debug(this.progress, e.name, speechUtterance.text.substr(e.charIndex, e.charLength));
     };

@@ -1,6 +1,6 @@
 = speakable
 
-is a simple and privacy friendly on-page screenreader / text-to-speech player using the native JavaScript Web Speech API. To hear it in action, please visit the https://tollwerk.github.io/speakable[demo page] that's part of this repository.
+is a simple and privacy friendly on-page screenreader / text-to-speech player using the native JavaScript Web Speech API. To hear it in action, please visit the https://tollwerk.github.io/speakable[demo page] which is part of this repository.
 
 == Usage
 
