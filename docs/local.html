@@ -2,11 +2,18 @@
 <html lang="de">
     <head>
         <meta charset="UTF-8">
-        <title>Speakable test page</title>
+        <title>Speakable demo &amp; test page</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link href="../dist/spkbl.css" rel="stylesheet"/>
     </head>
     <body>
+        <header>
+            <p lang="en">This is a very simple test page for the <a href="https://github.com/tollwerk/speakable">speakable
+                on-page screenreader</a> leveraging your browser's <a
+                href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API">Web Speech API</a>. If you don't
+                see a little player in front of each of the following sections your browser probably doesn't
+                support the API (yet). The main language of this document is set to German.</p>
+        </header>
         <main>
             <section class="spkbl">
                 <h1 lang="en">Speakable Test</h1>
@@ -23,13 +30,16 @@
             <section class="spkbl row" data-spkbl-l18n-play="Abspielen">
                 <h1 class="col-xs-12">Barriere·freie Angebote im TV und online</h1>
                 <div class="col-xs-12 col-md-10 col-md-offset-2">
-                    <p>Barriere·freie Angebote: ermöglichen vor allem Nutzer*innen und Nutzer:innen mit Behinderung eine gleich·berechtigte
-                        Teilhabe am audio·visuellen Informations- und Unter·haltungs·angebot. Zu den Angeboten gehören im
+                    <p>Barriere·freie Angebote: ermöglichen vor allem Nutzer*innen und Nutzer:innen mit Behinderung eine
+                        gleich·berechtigte
+                        Teilhabe am audio·visuellen Informations- und Unter·haltungs·angebot. Zu den Angeboten gehören
+                        im
                         Wesentlichen Untertitel, Gebärdenspracheinblendungen, Audiodeskription und Texte in Leichter
                         Sprache. Bei Apps und Online gibt es weitere Hilfsmittel, die Barrieren abbauen.</p></div>
             </section>
 
-            <p class="spkbl" data-spkbl-multivoice="false">Dies ist ein Typoblindtext. An ihm kann man sehen, ob alle Buchstaben da sind und wie sie
+            <p class="spkbl" data-spkbl-multivoice="false">Dies ist ein Typoblindtext. An ihm kann man sehen, ob alle
+                Buchstaben da sind und wie sie
                 aussehen.
                 Manchmal benutzt man Worte wie Hamburgefonts, Rafgenduks oder Handgloves, um Schriften zu testen.
                 Manchmal Sätze, die alle Buchstaben des Alphabets enthalten - man nennt diese Sätze »Pangrams«. Sehr
@@ -38,12 +48,16 @@
                 Kerning), um die Wirkung in anderen Sprachen zu testen.</p>
 
             <div class="spkbl">
-                <p>In diesem <strong>T</strong>ext werden <strong>A</strong>nfangsbuchstaben hervorgehoben.</p>
-                <div><p>Im zweiten Absatz allerdings <span>finden sich keine solchen</span> Hervorhebungen.</p></div>
+                <p>In diesem <strong>T</strong>ext werden <strong>A</strong>nfangsbuchstaben hervorgehoben, was keinen
+                    Unterbrechung im Lesefluss verursachen darf.</p>
+                <div><p>Im zweiten Absatz allerdings <span>finden sich keine solchen</span> Hervorhebungen, dafür sind
+                    mehrere Blockelemente ineinandergeschachtelt. Auch das sollte den Lesefluss nicht stören.</p></div>
             </div>
 
             <div class="spkbl">
-                <p>Dieser Text nutzt weiche Zeilenumbrüche<br>Er sollte am Zeilenende eine Pause machen und vor allem nicht 6000<br>000 als sechs Millionen lesen.<br>Mit Punkt am Ende darf die Pause aber auch nicht zu lang werden.</div>
+                <p>Dieser Text nutzt weiche Zeilenumbrüche<br>Der Screenreader sollte am Zeilenende eine hörbare Pause
+                    machen und vor allem nicht 6000<br>000 als sechs Millionen lesen.<br>Mit Punkt am Ende einer Zeile
+                    darf die Pause aber auch nicht zu lang werden.</p>
             </div>
         </main>
         <script src="../dist/spkbl.js"></script>

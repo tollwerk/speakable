@@ -1,7 +1,7 @@
 {
     "name": "speakable",
-    "version": "0.1.0",
-    "description": "Simple Text-To-Speech player / website screenreader using the native JavaScript Web Speech API",
+    "version": "0.2.0",
+    "description": "Simple and privacy friendly on-page screenreader / text-to-speech player using the native JavaScript Web Speech API",
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
@@ -26,6 +26,7 @@
         "gulp": "^4.0.2",
         "gulp-insert": "^0.5.0",
         "gulp-rename": "^2.0.0",
+        "gulp-replace": "^1.0.0",
         "gulp-sass": "^4.1.0",
         "gulp-typescript": "^6.0.0-alpha.1",
         "gulp-uglify": "^3.0.2",

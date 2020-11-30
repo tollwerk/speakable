@@ -6,6 +6,7 @@ const uglify = require('gulp-uglify');
 const sass = require('gulp-sass');
 const rename = require('gulp-rename');
 const insert = require('gulp-insert');
+const replace = require('gulp-replace');
 const prepend = `/* Speakable Text-To-Speech player ${require('./package.json').version} | https://github.com/tollwerk/speakable */\n`;
 
 exports.default = function () {
@@ -40,6 +41,17 @@ exports.default = function () {
                     .on('error', sass.logError))
                 .pipe(insert.prepend(prepend))
                 .pipe(dest('dist'));
+            cb();
+        }
+    );
+    watch(
+        'docs/local.html',
+        { ignoreInitial: false },
+        function (cb) {
+            src('docs/local.html')
+                .pipe(replace('../dist/', 'https://cdn.jsdelivr.net/gh/tollwerk/speakable@main/dist/'))
+                .pipe(rename(path => path.basename = 'index'))
+                .pipe(dest('docs'));
             cb();
         }
     );

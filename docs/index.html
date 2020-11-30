@@ -2,7 +2,7 @@
 <html lang="de">
     <head>
         <meta charset="UTF-8">
-        <title>Speakable test page</title>
+        <title>Speakable demo &amp; test page</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link href="https://cdn.jsdelivr.net/gh/tollwerk/speakable@main/dist/spkbl.css" rel="stylesheet"/>
     </head>
@@ -48,14 +48,16 @@
                 Kerning), um die Wirkung in anderen Sprachen zu testen.</p>
 
             <div class="spkbl">
-                <p>In diesem <strong>T</strong>ext werden <strong>A</strong>nfangsbuchstaben hervorgehoben.</p>
-                <div><p>Im zweiten Absatz allerdings <span>finden sich keine solchen</span> Hervorhebungen.</p></div>
+                <p>In diesem <strong>T</strong>ext werden <strong>A</strong>nfangsbuchstaben hervorgehoben, was keinen
+                    Unterbrechung im Lesefluss verursachen darf.</p>
+                <div><p>Im zweiten Absatz allerdings <span>finden sich keine solchen</span> Hervorhebungen, dafür sind
+                    mehrere Blockelemente ineinandergeschachtelt. Auch das sollte den Lesefluss nicht stören.</p></div>
             </div>
 
             <div class="spkbl">
-                <p>Dieser Text nutzt weiche Zeilenumbrüche<br>Er sollte am Zeilenende eine Pause machen und vor allem
-                    nicht 6000<br>000 als sechs Millionen lesen.<br>Mit Punkt am Ende darf die Pause aber auch nicht zu
-                    lang werden.</p>
+                <p>Dieser Text nutzt weiche Zeilenumbrüche<br>Der Screenreader sollte am Zeilenende eine hörbare Pause
+                    machen und vor allem nicht 6000<br>000 als sechs Millionen lesen.<br>Mit Punkt am Ende einer Zeile
+                    darf die Pause aber auch nicht zu lang werden.</p>
             </div>
         </main>
         <script src="https://cdn.jsdelivr.net/gh/tollwerk/speakable@main/dist/spkbl.js"></script>
