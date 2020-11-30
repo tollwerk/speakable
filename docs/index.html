@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="UTF-8">
+        <title>Speakable test page</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/gh/tollwerk/speakable@main/dist/spkbl.css" rel="stylesheet"/>
+    </head>
+    <body>
+        <main>
+            <section class="spkbl">
+                <h1 lang="en">Speakable Test</h1>
+                <p>Dies ist ein Typoblindtext. <span>An ihm kann man sehen, ob alle Buchstaben da sind und wie sie aussehen.</span>
+                    Manchmal benutzt man Worte wie Hamburgefonts, Rafgenduks oder <span lang="en">Handgloves</span>, um
+                    Schriften zu testen. Manchmal Sätze, die alle Buchstaben des Alphabets enthalten — man nennt diese
+                    Sätze »Pangrams«. Sehr bekannt ist dieser:
+                <blockquote lang="en">The quick brown fox jumps over the lazy old dog.</blockquote>
+                <p>Oft werden in Typoblindtexte auch fremdsprachige Satzteile eingebaut (<span lang="en">AVAIL® and Wefox™
+                                    are testing aussi la Kerning</span>), um die Wirkung in anderen Sprachen zu
+                    testen.</p>
+            </section>
+
+            <section class="spkbl row" data-spkbl-l18n-play="Abspielen">
+                <h1 class="col-xs-12">Barriere·freie Angebote im TV und online</h1>
+                <div class="col-xs-12 col-md-10 col-md-offset-2">
+                    <p>Barriere·freie Angebote: ermöglichen vor allem Nutzer*innen und Nutzer:innen mit Behinderung eine
+                        gleich·berechtigte
+                        Teilhabe am audio·visuellen Informations- und Unter·haltungs·angebot. Zu den Angeboten gehören
+                        im
+                        Wesentlichen Untertitel, Gebärdenspracheinblendungen, Audiodeskription und Texte in Leichter
+                        Sprache. Bei Apps und Online gibt es weitere Hilfsmittel, die Barrieren abbauen.</p></div>
+            </section>
+
+            <p class="spkbl" data-spkbl-multivoice="false">Dies ist ein Typoblindtext. An ihm kann man sehen, ob alle
+                Buchstaben da sind und wie sie
+                aussehen.
+                Manchmal benutzt man Worte wie Hamburgefonts, Rafgenduks oder Handgloves, um Schriften zu testen.
+                Manchmal Sätze, die alle Buchstaben des Alphabets enthalten - man nennt diese Sätze »Pangrams«. Sehr
+                bekannt ist dieser: <span data-spkbl-skip>The quick brown fox jumps over the lazy old dog.</span> Oft
+                werden in Typoblindtexte auch fremdsprachige Satzteile eingebaut (AVAIL® and Wefox™ are testing aussi la
+                Kerning), um die Wirkung in anderen Sprachen zu testen.</p>
+
+            <div class="spkbl">
+                <p>In diesem <strong>T</strong>ext werden <strong>A</strong>nfangsbuchstaben hervorgehoben.</p>
+                <div><p>Im zweiten Absatz allerdings <span>finden sich keine solchen</span> Hervorhebungen.</p></div>
+            </div>
+
+            <div class="spkbl">
+                <p>Dieser Text nutzt weiche Zeilenumbrüche<br>Er sollte am Zeilenende eine Pause machen und vor allem
+                    nicht 6000<br>000 als sechs Millionen lesen.<br>Mit Punkt am Ende darf die Pause aber auch nicht zu
+                    lang werden.</p>
+            </div>
+        </main>
+        <script src="https://cdn.jsdelivr.net/gh/tollwerk/speakable@main/dist/spkbl.js"></script>
+        <script>
+            Speakable.init({
+                multivoice: true,
+                l18n: {
+                    play: 'Text vorlesen',
+                    pause: 'Pause',
+                    progress: 'Fortschritt',
+                    stop: 'Schließen'
+                }
+            });
+        </script>
+    </body>
+</html>
