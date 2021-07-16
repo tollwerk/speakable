@@ -4,12 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on https://keepachangelog.com/en/1.0.0/[Keep a Changelog], and this project adheres to https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
-== [Unreleased]
+== [0.3.0-pre] - 2021-07-16
 
 === Added
 
 - Online demo page at https://tollwerk.github.io/speakable
 - Improve progress bar support for regular screenreaders
+- Add option to use local voices only (remote voices seem to make trouble in Chrome)
 
 == [0.2.0-pre] - 2020-11-28
 

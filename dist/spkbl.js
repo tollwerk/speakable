@@ -1,11 +1,4 @@
 /* Speakable Text-To-Speech player 0.2.0 | https://github.com/tollwerk/speakable */
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
-};
 /* eslint no-param-reassign: ["error", { "props": false }] */
 (function iffe(w, d) {
     /**
@@ -40,6 +33,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      */
     var defaultOptions = {
         selector: '.spkbl',
+        local: true,
         multivoice: true,
         hidden: false,
         player: null,
@@ -85,7 +79,6 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
      * @param sources Source object(s)
      */
     function mergeDeep(target) {
-        var _a, _b;
         var sources = [];
         for (var _i = 1; _i < arguments.length; _i++) {
             sources[_i - 1] = arguments[_i];
@@ -106,7 +99,8 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
                 }
             }
         }
-        return mergeDeep.apply(void 0, __spreadArrays([target], sources));
+        return mergeDeep.apply(void 0, [target].concat(sources));
+        var _a, _b;
     }
     /**
      * Cast a value to a Boolean if possible
@@ -345,7 +339,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         // Run through all chunks, collapse the text nodes and build corresponding sourcemaps
         var chunkMaps = chunks.map(this.map);
         var consolidated = [chunkMaps.shift()];
-        var _loop_1 = function () {
+        var _loop_1 = function() {
             var chunk = chunkMaps.shift();
             var last = consolidated.length - 1;
             if (chunk.lang === consolidated[last].lang) {
@@ -495,7 +489,6 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         this.controls.progress.setAttribute('aria-valuenow', '0');
         this.controls.progress.setAttribute('aria-valuemin', '0');
         this.controls.progress.setAttribute('aria-valuemax', '100');
-        this.controls.progress.setAttribute('readonly', 'true');
         this.controls.progress.setAttribute('role', 'progressbar');
         // Stop button
         this.controls.stop.type = 'button';
@@ -537,6 +530,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         this.offset = 0;
         this.progress = 0;
         speechSynthesis.cancel();
+        // console.log(speechUtterance);
         speechUtterance.onboundary = this.boundary.bind(this);
         speechUtterance.onend = this.next.bind(this);
         this.next(e);
@@ -689,20 +683,22 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
         if (options === void 0) { options = {}; }
         // If the Web Speech API is supported
         if ('SpeechSynthesisUtterance' in w) {
+            // Prepare the options
+            var opts_1 = mergeDeep(defaultOptions, options);
+            var selector = opts_1.selector || '';
+            delete opts_1.selector;
+            // Prepare the voices
             speechUtterance = new SpeechSynthesisUtterance();
             speechUtterance.volume = 1;
             speechUtterance.pitch = 1;
             speechUtterance.rate = 1;
-            voices = speechSynthesis.getVoices();
+            voices = speechSynthesis.getVoices().filter(function (v) { return !opts_1.local || v.localService; });
             // Safari iOS doesn't support the addEventListener() method for the speechSynthesis
             if (speechSynthesis.addEventListener) {
                 speechSynthesis.addEventListener('voiceschanged', function () {
-                    voices = speechSynthesis.getVoices();
+                    voices = speechSynthesis.getVoices().filter(function (v) { return !opts_1.local || v.localService; });
                 });
             }
-            var opts_1 = mergeDeep(defaultOptions, options);
-            var selector = opts_1.selector || '';
-            delete opts_1.selector;
             return selector.length ? Array.from(d.querySelectorAll(selector))
                 .map(function (s) { return new Speakable(s, opts_1); }) : [];
         }

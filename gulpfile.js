@@ -3,7 +3,7 @@
 const { src, dest, watch } = require('gulp');
 const typescript = require('gulp-typescript');
 const uglify = require('gulp-uglify');
-const sass = require('gulp-sass');
+const sass = require('gulp-sass')(require('node-sass'));
 const rename = require('gulp-rename');
 const insert = require('gulp-insert');
 const replace = require('gulp-replace');
