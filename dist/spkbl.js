@@ -44,6 +44,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
         selector: '.spkbl',
         local: true,
         multivoice: true,
+        src: null,
         hidden: false,
         player: null,
         l18n: {
@@ -380,8 +381,11 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
      * @constructor
      */
     function Speakable(element, options) {
+        var _this = this;
         this.element = element;
         this.options = this.configure(options, 'data-spkbl');
+        this.src = null;
+        this.audio = null;
         this.utterances = [];
         this.currentUtterance = 0;
         this.length = 0;
@@ -400,8 +404,23 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 factory = w[this.options.player];
             }
         }
+        // If this player should simply play an audio file: Create an audio resource
+        if (this.options.src) {
+            this.audioReady = false;
+            this.audio = new Audio(this.options.src);
+            this.audio.addEventListener('loadstart', function () {
+                _this.audioReady = false;
+            });
+            this.audio.addEventListener('canplaythrough', function () {
+                _this.audioReady = true;
+            });
+            this.audio.addEventListener('error', function () {
+                _this.audio = null;
+            });
+        }
+        // Build the player
         this.buildPlayer(factory);
-        // Parse the element contents
+        // Text-to-speech: Parse the element contents
         var astParser = new AstParser(this.determineLanguage(this.element) || 'en', this.options.multivoice);
         this.setUtterances(astParser.chunked(this.element));
         // Inject the player
@@ -538,10 +557,16 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
         this.currentUtterance = -1;
         this.offset = 0;
         this.progress = 0;
-        speechSynthesis.cancel();
-        // console.log(speechUtterance);
-        speechUtterance.onboundary = this.boundary.bind(this);
-        speechUtterance.onend = this.next.bind(this);
+        // If an audio file should be played
+        if (this.audio && this.audioReady) {
+            this.audio.ontimeupdate = this.boundary.bind(this);
+            this.audio.onended = this.next.bind(this);
+        }
+        else {
+            speechSynthesis.cancel();
+            speechUtterance.onboundary = this.boundary.bind(this);
+            speechUtterance.onend = this.next.bind(this);
+        }
         this.next(e);
     };
     /**
@@ -565,7 +590,10 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
             this.nextOnResume = true;
             speechSynthesis.cancel();
         }
-        else if (this.utterances.length > (this.currentUtterance + 1)) {
+        else if (this.audio && !this.audio.ended) {
+            this.audio.play();
+        }
+        else if (!this.audio && (this.utterances.length > (this.currentUtterance + 1))) {
             if (this.currentUtterance >= 0) {
                 this.offset += this.utterances[this.currentUtterance].length + 1;
             }
@@ -605,20 +633,37 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
      * @param {SpeechSynthesisEvent} e Event
      */
     Speakable.prototype.boundary = function boundary(e) {
-        this.progress = Math.round((100 * (this.offset + e.charIndex)) / this.length);
+        if (this.audio) {
+            this.audio = Number.isNaN(this.audio.duration) ? 0
+                : Math.round(100 * (this.audio.currentTime / this.audio.duration));
+        }
+        else {
+            this.progress = Math.round((100 * (this.offset + e.charIndex)) / this.length);
+        }
+        this.updateProgress();
+        // console.debug(this.progress, e.name, speechUtterance.text.substr(e.charIndex, e.charLength));
+    };
+    /**
+     * Update the progress bar
+     */
+    Speakable.prototype.updateProgress = function updateProgress() {
         this.controls.progress.value = this.progress;
         this.controls.progress.setAttribute('aria-valuenow', this.progress);
         this.controls.progress.textContent = "".concat(this.progress, " % ");
-        // console.debug(this.progress, e.name, speechUtterance.text.substr(e.charIndex, e.charLength));
     };
     /**
      * Pause / Resume playing
      */
     Speakable.prototype.pause = function pause() {
-        speechSynthesis[this.togglePause(this.paused) ? 'pause' : 'resume']();
-        if (this.nextOnResume) {
-            this.nextOnResume = false;
-            this.next();
+        if (this.audio) {
+            this.audio[this.togglePause(this.paused) ? 'pause' : 'play']();
+        }
+        else {
+            speechSynthesis[this.togglePause(this.paused) ? 'pause' : 'resume']();
+            if (this.nextOnResume) {
+                this.nextOnResume = false;
+                this.next();
+            }
         }
     };
     /**
@@ -645,14 +690,23 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
      * Stop playing
      */
     Speakable.prototype.halt = function halt() {
-        speechUtterance.onboundary = null;
-        speechUtterance.onend = null;
-        speechSynthesis.cancel();
+        if (this.audio) {
+            this.audio.ontimeupdate = null;
+            this.audio.onended = null;
+            this.audio.load();
+        }
+        else {
+            speechUtterance.onboundary = null;
+            speechUtterance.onend = null;
+            speechSynthesis.cancel();
+        }
         this.togglePause(true);
         d.removeEventListener('keyup', this.escape.bind(this));
         this.player.classList.add('spkbl-player--inactive');
         this.player.classList.remove('spkbl-player--active');
         this.player.classList.remove('spkbl-player--paused');
+        this.progress = 0;
+        this.updateProgress();
     };
     /**
      * Inject the player

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on https://keepachangelog.com/en/1.0.0/[Keep a Changelog], and this project adheres to https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
+== [0.4.0-pre] - 2022-04-19
+
+=== Added
+
+- Support for playing back audio files (with fallback to text-to-speech mode)
+
 == [0.3.0-pre] - 2021-07-16
 
 === Added

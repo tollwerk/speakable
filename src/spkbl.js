@@ -36,6 +36,7 @@
         selector: '.spkbl',
         local: true,
         multivoice: true,
+        src: null,
         hidden: false, // Hide player from assistive technology
         player: null, // Custom player implementation (constructor function name or reference)
         l18n: {
@@ -241,62 +242,62 @@
                 }
             } else {
                 switch (c.type) {
-                    case 2:
+                case 2:
+                    if (sentence.chunks.length) {
+                        chunks.push(sentence);
+                        sentence = this.createSentence(c.lang);
+                    } else {
+                        sentence.lang = c.lang;
+                    }
+                    c.items.forEach(chunksRecursive);
+                    if (sentence && sentence.chunks.length) {
+                        chunks.push(sentence);
+                    }
+                    sentence = null;
+                    break;
+                case 1:
+                    if (c.node.tagName.toUpperCase() === 'BR') {
+                        const clen = sentence.chunks.length;
+                        if (clen) {
+                            const lastText = sentence.chunks[clen - 1].text;
+                            if (!punctuation.test(lastText)) {
+                                sentence.chunks.push(
+                                    {
+                                        node: c.node,
+                                        text: ' . '
+                                    }
+                                );
+                            } else if (!/\s$/.test(lastText)) {
+                                sentence.chunks.push(
+                                    {
+                                        node: c.node,
+                                        text: ' '
+                                    }
+                                );
+                            }
+                        }
+                    } else if (c.lang === sentence.lang) {
+                        c.items.forEach(chunksRecursive);
+                    } else {
+                        const { lang } = sentence;
                         if (sentence.chunks.length) {
                             chunks.push(sentence);
-                            sentence = this.createSentence(c.lang);
-                        } else {
-                            sentence.lang = c.lang;
                         }
+                        sentence = this.createSentence(c.lang);
                         c.items.forEach(chunksRecursive);
-                        if (sentence && sentence.chunks.length) {
+                        if (sentence.chunks.length) {
                             chunks.push(sentence);
                         }
-                        sentence = null;
-                        break;
-                    case 1:
-                        if (c.node.tagName.toUpperCase() === 'BR') {
-                            const clen = sentence.chunks.length;
-                            if (clen) {
-                                const lastText = sentence.chunks[clen - 1].text;
-                                if (!punctuation.test(lastText)) {
-                                    sentence.chunks.push(
-                                        {
-                                            node: c.node,
-                                            text: ' . '
-                                        }
-                                    );
-                                } else if (!/\s$/.test(lastText)) {
-                                    sentence.chunks.push(
-                                        {
-                                            node: c.node,
-                                            text: ' '
-                                        }
-                                    );
-                                }
-                            }
-                        } else if (c.lang === sentence.lang) {
-                            c.items.forEach(chunksRecursive);
-                        } else {
-                            const { lang } = sentence;
-                            if (sentence.chunks.length) {
-                                chunks.push(sentence);
-                            }
-                            sentence = this.createSentence(c.lang);
-                            c.items.forEach(chunksRecursive);
-                            if (sentence.chunks.length) {
-                                chunks.push(sentence);
-                            }
-                            sentence = this.createSentence(lang);
+                        sentence = this.createSentence(lang);
+                    }
+                    break;
+                default:
+                    sentence.chunks.push(
+                        {
+                            node: c.node,
+                            text: c.text
                         }
-                        break;
-                    default:
-                        sentence.chunks.push(
-                            {
-                                node: c.node,
-                                text: c.text
-                            }
-                        );
+                    );
                 }
             }
         };
@@ -380,6 +381,8 @@
     function Speakable(element, options) {
         this.element = element;
         this.options = this.configure(options, 'data-spkbl');
+        this.src = null;
+        this.audio = null;
         this.utterances = [];
         this.currentUtterance = 0;
         this.length = 0;
@@ -397,9 +400,26 @@
                 factory = w[this.options.player];
             }
         }
+
+        // If this player should simply play an audio file: Create an audio resource
+        if (this.options.src) {
+            this.audioReady = false;
+            this.audio = new Audio(this.options.src);
+            this.audio.addEventListener('loadstart', () => {
+                this.audioReady = false;
+            });
+            this.audio.addEventListener('canplaythrough', () => {
+                this.audioReady = true;
+            });
+            this.audio.addEventListener('error', () => {
+                this.audio = null;
+            });
+        }
+
+        // Build the player
         this.buildPlayer(factory);
 
-        // Parse the element contents
+        // Text-to-speech: Parse the element contents
         const astParser = new AstParser(this.determineLanguage(this.element) || 'en', this.options.multivoice);
         this.setUtterances(astParser.chunked(this.element));
 
@@ -550,10 +570,15 @@
         this.offset = 0;
         this.progress = 0;
 
-        speechSynthesis.cancel();
-        // console.log(speechUtterance);
-        speechUtterance.onboundary = this.boundary.bind(this);
-        speechUtterance.onend = this.next.bind(this);
+        // If an audio file should be played
+        if (this.audio && this.audioReady) {
+            this.audio.ontimeupdate = this.boundary.bind(this);
+            this.audio.onended = this.next.bind(this);
+        } else {
+            speechSynthesis.cancel();
+            speechUtterance.onboundary = this.boundary.bind(this);
+            speechUtterance.onend = this.next.bind(this);
+        }
 
         this.next(e);
     };
@@ -579,7 +604,9 @@
         if (this.paused) {
             this.nextOnResume = true;
             speechSynthesis.cancel();
-        } else if (this.utterances.length > (this.currentUtterance + 1)) {
+        } else if (this.audio && !this.audio.ended) {
+            this.audio.play();
+        } else if (!this.audio && (this.utterances.length > (this.currentUtterance + 1))) {
             if (this.currentUtterance >= 0) {
                 this.offset += this.utterances[this.currentUtterance].length + 1;
             }
@@ -620,21 +647,38 @@
      * @param {SpeechSynthesisEvent} e Event
      */
     Speakable.prototype.boundary = function boundary(e) {
-        this.progress = Math.round((100 * (this.offset + e.charIndex)) / this.length);
+        if (this.audio) {
+            this.audio = Number.isNaN(this.audio.duration) ? 0
+                : Math.round(100 * (this.audio.currentTime / this.audio.duration));
+        } else {
+            this.progress = Math.round((100 * (this.offset + e.charIndex)) / this.length);
+        }
+
+        this.updateProgress();
+        // console.debug(this.progress, e.name, speechUtterance.text.substr(e.charIndex, e.charLength));
+    };
+
+    /**
+     * Update the progress bar
+     */
+    Speakable.prototype.updateProgress = function updateProgress() {
         this.controls.progress.value = this.progress;
         this.controls.progress.setAttribute('aria-valuenow', this.progress);
         this.controls.progress.textContent = `${this.progress} % `;
-        // console.debug(this.progress, e.name, speechUtterance.text.substr(e.charIndex, e.charLength));
     };
 
     /**
      * Pause / Resume playing
      */
     Speakable.prototype.pause = function pause() {
-        speechSynthesis[this.togglePause(this.paused) ? 'pause' : 'resume']();
-        if (this.nextOnResume) {
-            this.nextOnResume = false;
-            this.next();
+        if (this.audio) {
+            this.audio[this.togglePause(this.paused) ? 'pause' : 'play']();
+        } else {
+            speechSynthesis[this.togglePause(this.paused) ? 'pause' : 'resume']();
+            if (this.nextOnResume) {
+                this.nextOnResume = false;
+                this.next();
+            }
         }
     };
 
@@ -664,15 +708,24 @@
      * Stop playing
      */
     Speakable.prototype.halt = function halt() {
-        speechUtterance.onboundary = null;
-        speechUtterance.onend = null;
-        speechSynthesis.cancel();
+        if (this.audio) {
+            this.audio.ontimeupdate = null;
+            this.audio.onended = null;
+            this.audio.load();
+        } else {
+            speechUtterance.onboundary = null;
+            speechUtterance.onend = null;
+            speechSynthesis.cancel();
+        }
         this.togglePause(true);
         d.removeEventListener('keyup', this.escape.bind(this));
 
         this.player.classList.add('spkbl-player--inactive');
         this.player.classList.remove('spkbl-player--active');
         this.player.classList.remove('spkbl-player--paused');
+
+        this.progress = 0;
+        this.updateProgress();
     };
 
     /**
@@ -686,14 +739,14 @@
             return;
         }
         switch (this.options.insert) {
-            case 'before':
-                this.element.parentNode.insertBefore(this.player, this.element);
-                break;
-            case 'after':
-                this.element.parentNode.insertBefore(this.player, this.element.nextSibling);
-                break;
-            default:
-                this.element.insertBefore(this.player, this.element.firstChild);
+        case 'before':
+            this.element.parentNode.insertBefore(this.player, this.element);
+            break;
+        case 'after':
+            this.element.parentNode.insertBefore(this.player, this.element.nextSibling);
+            break;
+        default:
+            this.element.insertBefore(this.player, this.element.firstChild);
         }
     };
 
