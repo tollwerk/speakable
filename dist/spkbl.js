@@ -1,4 +1,4 @@
-/* Speakable Text-To-Speech player 0.2.0 | https://github.com/tollwerk/speakable */
+/* Speakable Text-To-Speech player 0.4.0 | https://github.com/tollwerk/speakable */
 var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
         if (ar || !(i in from)) {
