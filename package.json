@@ -1,6 +1,6 @@
 {
     "name": "speakable",
-    "version": "0.4.0",
+    "version": "0.4.1-pre",
     "description": "Simple and privacy friendly on-page screenreader / text-to-speech player using the native JavaScript Web Speech API",
     "main": "index.js",
     "scripts": {

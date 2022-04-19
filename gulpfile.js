@@ -5,7 +5,8 @@ const sass = require('gulp-sass')(require('node-sass'));
 const rename = require('gulp-rename');
 const insert = require('gulp-insert');
 const replace = require('gulp-replace');
-const prepend = `/* Speakable Text-To-Speech player ${require('./package.json').version} | https://github.com/tollwerk/speakable */\n`;
+const version = require('./package.json').version;
+const prepend = `/* Speakable Text-To-Speech player ${version} | https://github.com/tollwerk/speakable */\n`;
 
 exports.default = function () {
     watch(
@@ -45,7 +46,7 @@ exports.default = function () {
         { ignoreInitial: false },
         function () {
             return src('docs/local.html')
-                .pipe(replace('../dist/', 'https://cdn.jsdelivr.net/gh/tollwerk/speakable@latest/dist/'))
+                .pipe(replace('../dist/', `https://cdn.jsdelivr.net/gh/tollwerk/speakable@${version}/dist/`))
                 .pipe(rename(path => path.basename = 'index'))
                 .pipe(dest('docs'));
         }

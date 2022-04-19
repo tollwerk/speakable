@@ -1,4 +1,4 @@
-/* Speakable Text-To-Speech player 0.4.0 | https://github.com/tollwerk/speakable */
+/* Speakable Text-To-Speech player 0.4.1-pre | https://github.com/tollwerk/speakable */
 var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
         if (ar || !(i in from)) {
@@ -634,7 +634,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
      */
     Speakable.prototype.boundary = function boundary(e) {
         if (this.audio) {
-            this.audio = Number.isNaN(this.audio.duration) ? 0
+            this.progress = Number.isNaN(this.audio.duration) ? 0
                 : Math.round(100 * (this.audio.currentTime / this.audio.duration));
         }
         else {

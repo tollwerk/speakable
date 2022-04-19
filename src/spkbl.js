@@ -648,7 +648,7 @@
      */
     Speakable.prototype.boundary = function boundary(e) {
         if (this.audio) {
-            this.audio = Number.isNaN(this.audio.duration) ? 0
+            this.progress = Number.isNaN(this.audio.duration) ? 0
                 : Math.round(100 * (this.audio.currentTime / this.audio.duration));
         } else {
             this.progress = Math.round((100 * (this.offset + e.charIndex)) / this.length);
