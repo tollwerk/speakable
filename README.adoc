@@ -142,7 +142,6 @@ Please let us know if you spot one!
 
 == To-do
 
-* Add a demo page
 * Add tests
 * Add visual highlighting of text currently being read
 
