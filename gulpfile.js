@@ -1,5 +1,3 @@
-'use strict';
-
 const { src, dest, watch } = require('gulp');
 const typescript = require('gulp-typescript');
 const uglify = require('gulp-uglify');
@@ -13,8 +11,8 @@ exports.default = function () {
     watch(
         'src/*.js',
         { ignoreInitial: false },
-        function (cb) {
-            src('src/spkbl.js')
+        function () {
+            return src('src/spkbl.js')
                 .pipe(
                     typescript(
                         {
@@ -29,30 +27,27 @@ exports.default = function () {
                 .pipe(rename(path => path.basename += '.min'))
                 .pipe(insert.prepend(prepend))
                 .pipe(dest('dist'));
-            cb();
         }
     );
     watch(
         'src/**/*.scss',
         { ignoreInitial: false },
-        function (cb) {
-            src('src/spkbl.scss')
+        function () {
+            return src('src/spkbl.scss')
                 .pipe(sass({ outputStyle: 'compressed' })
                     .on('error', sass.logError))
                 .pipe(insert.prepend(prepend))
                 .pipe(dest('dist'));
-            cb();
         }
     );
     watch(
         'docs/local.html',
         { ignoreInitial: false },
-        function (cb) {
-            src('docs/local.html')
+        function () {
+            return src('docs/local.html')
                 .pipe(replace('../dist/', 'https://cdn.jsdelivr.net/gh/tollwerk/speakable@main/dist/'))
                 .pipe(rename(path => path.basename = 'index'))
                 .pipe(dest('docs'));
-            cb();
         }
     );
 };

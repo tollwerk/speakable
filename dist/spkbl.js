@@ -708,8 +708,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                     voices = speechSynthesis.getVoices().filter(function (v) { return !opts_1.local || v.localService; });
                 });
             }
-            return selector.length ? Array.from(d.querySelectorAll(selector))
-                .map(function (s) { return new Speakable(s, opts_1); }) : [];
+            return selector.length ? Array.from(d.querySelectorAll(selector)).map(function (s) { return new Speakable(s, opts_1); }) : [];
         }
         return [];
     };

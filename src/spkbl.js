@@ -241,62 +241,62 @@
                 }
             } else {
                 switch (c.type) {
-                case 2:
-                    if (sentence.chunks.length) {
-                        chunks.push(sentence);
-                        sentence = this.createSentence(c.lang);
-                    } else {
-                        sentence.lang = c.lang;
-                    }
-                    c.items.forEach(chunksRecursive);
-                    if (sentence && sentence.chunks.length) {
-                        chunks.push(sentence);
-                    }
-                    sentence = null;
-                    break;
-                case 1:
-                    if (c.node.tagName.toUpperCase() === 'BR') {
-                        const clen = sentence.chunks.length;
-                        if (clen) {
-                            const lastText = sentence.chunks[clen - 1].text;
-                            if (!punctuation.test(lastText)) {
-                                sentence.chunks.push(
-                                    {
-                                        node: c.node,
-                                        text: ' . '
-                                    }
-                                );
-                            } else if (!/\s$/.test(lastText)) {
-                                sentence.chunks.push(
-                                    {
-                                        node: c.node,
-                                        text: ' '
-                                    }
-                                );
+                    case 2:
+                        if (sentence.chunks.length) {
+                            chunks.push(sentence);
+                            sentence = this.createSentence(c.lang);
+                        } else {
+                            sentence.lang = c.lang;
+                        }
+                        c.items.forEach(chunksRecursive);
+                        if (sentence && sentence.chunks.length) {
+                            chunks.push(sentence);
+                        }
+                        sentence = null;
+                        break;
+                    case 1:
+                        if (c.node.tagName.toUpperCase() === 'BR') {
+                            const clen = sentence.chunks.length;
+                            if (clen) {
+                                const lastText = sentence.chunks[clen - 1].text;
+                                if (!punctuation.test(lastText)) {
+                                    sentence.chunks.push(
+                                        {
+                                            node: c.node,
+                                            text: ' . '
+                                        }
+                                    );
+                                } else if (!/\s$/.test(lastText)) {
+                                    sentence.chunks.push(
+                                        {
+                                            node: c.node,
+                                            text: ' '
+                                        }
+                                    );
+                                }
                             }
+                        } else if (c.lang === sentence.lang) {
+                            c.items.forEach(chunksRecursive);
+                        } else {
+                            const { lang } = sentence;
+                            if (sentence.chunks.length) {
+                                chunks.push(sentence);
+                            }
+                            sentence = this.createSentence(c.lang);
+                            c.items.forEach(chunksRecursive);
+                            if (sentence.chunks.length) {
+                                chunks.push(sentence);
+                            }
+                            sentence = this.createSentence(lang);
                         }
-                    } else if (c.lang === sentence.lang) {
-                        c.items.forEach(chunksRecursive);
-                    } else {
-                        const { lang } = sentence;
-                        if (sentence.chunks.length) {
-                            chunks.push(sentence);
-                        }
-                        sentence = this.createSentence(c.lang);
-                        c.items.forEach(chunksRecursive);
-                        if (sentence.chunks.length) {
-                            chunks.push(sentence);
-                        }
-                        sentence = this.createSentence(lang);
-                    }
-                    break;
-                default:
-                    sentence.chunks.push(
-                        {
-                            node: c.node,
-                            text: c.text
-                        }
-                    );
+                        break;
+                    default:
+                        sentence.chunks.push(
+                            {
+                                node: c.node,
+                                text: c.text
+                            }
+                        );
                 }
             }
         };
@@ -608,7 +608,7 @@
             const lang = locale.split('-')
                 .shift();
             utterance.voice = voices.find((v) => (v.lang === locale) || (v.lang === lang)
-                || v.lang.startsWith(`${locale}-`) || v.lang.startsWith(`${lang}-`))
+                    || v.lang.startsWith(`${locale}-`) || v.lang.startsWith(`${lang}-`))
                 || voices.find((v) => v.default) || voices[0];
         }
         return utterance.voice;
@@ -686,14 +686,14 @@
             return;
         }
         switch (this.options.insert) {
-        case 'before':
-            this.element.parentNode.insertBefore(this.player, this.element);
-            break;
-        case 'after':
-            this.element.parentNode.insertBefore(this.player, this.element.nextSibling);
-            break;
-        default:
-            this.element.insertBefore(this.player, this.element.firstChild);
+            case 'before':
+                this.element.parentNode.insertBefore(this.player, this.element);
+                break;
+            case 'after':
+                this.element.parentNode.insertBefore(this.player, this.element.nextSibling);
+                break;
+            default:
+                this.element.insertBefore(this.player, this.element.firstChild);
         }
     };
 
@@ -733,8 +733,7 @@
                 });
             }
 
-            return selector.length ? Array.from(d.querySelectorAll(selector))
-                .map((s) => new Speakable(s, opts)) : [];
+            return selector.length ? Array.from(d.querySelectorAll(selector)).map((s) => new Speakable(s, opts)) : [];
         }
 
         return [];
