@@ -45,7 +45,7 @@ exports.default = function () {
         { ignoreInitial: false },
         function () {
             return src('docs/local.html')
-                .pipe(replace('../dist/', 'https://cdn.jsdelivr.net/gh/tollwerk/speakable@main/dist/'))
+                .pipe(replace('../dist/', 'https://cdn.jsdelivr.net/gh/tollwerk/speakable@latest/dist/'))
                 .pipe(rename(path => path.basename = 'index'))
                 .pipe(dest('docs'));
         }
