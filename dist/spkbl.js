@@ -1,4 +1,13 @@
 /* Speakable Text-To-Speech player 0.2.0 | https://github.com/tollwerk/speakable */
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 /* eslint no-param-reassign: ["error", { "props": false }] */
 (function iffe(w, d) {
     /**
@@ -79,6 +88,7 @@
      * @param sources Source object(s)
      */
     function mergeDeep(target) {
+        var _a, _b;
         var sources = [];
         for (var _i = 1; _i < arguments.length; _i++) {
             sources[_i - 1] = arguments[_i];
@@ -99,8 +109,7 @@
                 }
             }
         }
-        return mergeDeep.apply(void 0, [target].concat(sources));
-        var _a, _b;
+        return mergeDeep.apply(void 0, __spreadArray([target], sources, false));
     }
     /**
      * Cast a value to a Boolean if possible
@@ -339,14 +348,14 @@
         // Run through all chunks, collapse the text nodes and build corresponding sourcemaps
         var chunkMaps = chunks.map(this.map);
         var consolidated = [chunkMaps.shift()];
-        var _loop_1 = function() {
+        var _loop_1 = function () {
             var chunk = chunkMaps.shift();
             var last = consolidated.length - 1;
             if (chunk.lang === consolidated[last].lang) {
                 if (!punctuation.test(consolidated[last].text)) {
                     consolidated[last].text += '. ';
                 }
-                consolidated[last].text = consolidated[last].text.trim() + " ";
+                consolidated[last].text = "".concat(consolidated[last].text.trim(), " ");
                 var offset_1 = consolidated[last].text.length;
                 consolidated[last].text += chunk.text;
                 chunk.map.forEach(function (value, key) {
@@ -410,7 +419,7 @@
         var configured = {};
         for (var o in options) {
             if (Object.prototype.hasOwnProperty.call(options, o)) {
-                var attr = prefix + "-" + o;
+                var attr = "".concat(prefix, "-").concat(o);
                 if (isObject(options[o])) {
                     configured[o] = this.configure(options[o], attr);
                 }
@@ -585,7 +594,7 @@
             var lang_1 = locale_1.split('-')
                 .shift();
             utterance.voice = voices.find(function (v) { return (v.lang === locale_1) || (v.lang === lang_1)
-                || v.lang.startsWith(locale_1 + "-") || v.lang.startsWith(lang_1 + "-"); })
+                || v.lang.startsWith("".concat(locale_1, "-")) || v.lang.startsWith("".concat(lang_1, "-")); })
                 || voices.find(function (v) { return v.default; }) || voices[0];
         }
         return utterance.voice;
@@ -599,7 +608,7 @@
         this.progress = Math.round((100 * (this.offset + e.charIndex)) / this.length);
         this.controls.progress.value = this.progress;
         this.controls.progress.setAttribute('aria-valuenow', this.progress);
-        this.controls.progress.textContent = this.progress + " % ";
+        this.controls.progress.textContent = "".concat(this.progress, " % ");
         // console.debug(this.progress, e.name, speechUtterance.text.substr(e.charIndex, e.charLength));
     };
     /**

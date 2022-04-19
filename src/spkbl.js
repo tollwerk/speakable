@@ -241,62 +241,62 @@
                 }
             } else {
                 switch (c.type) {
-                    case 2:
+                case 2:
+                    if (sentence.chunks.length) {
+                        chunks.push(sentence);
+                        sentence = this.createSentence(c.lang);
+                    } else {
+                        sentence.lang = c.lang;
+                    }
+                    c.items.forEach(chunksRecursive);
+                    if (sentence && sentence.chunks.length) {
+                        chunks.push(sentence);
+                    }
+                    sentence = null;
+                    break;
+                case 1:
+                    if (c.node.tagName.toUpperCase() === 'BR') {
+                        const clen = sentence.chunks.length;
+                        if (clen) {
+                            const lastText = sentence.chunks[clen - 1].text;
+                            if (!punctuation.test(lastText)) {
+                                sentence.chunks.push(
+                                    {
+                                        node: c.node,
+                                        text: ' . '
+                                    }
+                                );
+                            } else if (!/\s$/.test(lastText)) {
+                                sentence.chunks.push(
+                                    {
+                                        node: c.node,
+                                        text: ' '
+                                    }
+                                );
+                            }
+                        }
+                    } else if (c.lang === sentence.lang) {
+                        c.items.forEach(chunksRecursive);
+                    } else {
+                        const { lang } = sentence;
                         if (sentence.chunks.length) {
                             chunks.push(sentence);
-                            sentence = this.createSentence(c.lang);
-                        } else {
-                            sentence.lang = c.lang;
                         }
+                        sentence = this.createSentence(c.lang);
                         c.items.forEach(chunksRecursive);
-                        if (sentence && sentence.chunks.length) {
+                        if (sentence.chunks.length) {
                             chunks.push(sentence);
                         }
-                        sentence = null;
-                        break;
-                    case 1:
-                        if (c.node.tagName.toUpperCase() === 'BR') {
-                            const clen = sentence.chunks.length;
-                            if (clen) {
-                                const lastText = sentence.chunks[clen - 1].text;
-                                if (!punctuation.test(lastText)) {
-                                    sentence.chunks.push(
-                                        {
-                                            node: c.node,
-                                            text: ' . '
-                                        }
-                                    );
-                                } else if (!/\s$/.test(lastText)) {
-                                    sentence.chunks.push(
-                                        {
-                                            node: c.node,
-                                            text: ' '
-                                        }
-                                    );
-                                }
-                            }
-                        } else if (c.lang === sentence.lang) {
-                            c.items.forEach(chunksRecursive);
-                        } else {
-                            const { lang } = sentence;
-                            if (sentence.chunks.length) {
-                                chunks.push(sentence);
-                            }
-                            sentence = this.createSentence(c.lang);
-                            c.items.forEach(chunksRecursive);
-                            if (sentence.chunks.length) {
-                                chunks.push(sentence);
-                            }
-                            sentence = this.createSentence(lang);
+                        sentence = this.createSentence(lang);
+                    }
+                    break;
+                default:
+                    sentence.chunks.push(
+                        {
+                            node: c.node,
+                            text: c.text
                         }
-                        break;
-                    default:
-                        sentence.chunks.push(
-                            {
-                                node: c.node,
-                                text: c.text
-                            }
-                        );
+                    );
                 }
             }
         };
@@ -686,14 +686,14 @@
             return;
         }
         switch (this.options.insert) {
-            case 'before':
-                this.element.parentNode.insertBefore(this.player, this.element);
-                break;
-            case 'after':
-                this.element.parentNode.insertBefore(this.player, this.element.nextSibling);
-                break;
-            default:
-                this.element.insertBefore(this.player, this.element.firstChild);
+        case 'before':
+            this.element.parentNode.insertBefore(this.player, this.element);
+            break;
+        case 'after':
+            this.element.parentNode.insertBefore(this.player, this.element.nextSibling);
+            break;
+        default:
+            this.element.insertBefore(this.player, this.element.firstChild);
         }
     };
 
@@ -724,12 +724,12 @@
             speechUtterance.volume = 1;
             speechUtterance.pitch = 1;
             speechUtterance.rate = 1;
-            voices = speechSynthesis.getVoices().filter(v => !opts.local || v.localService);
+            voices = speechSynthesis.getVoices().filter((v) => !opts.local || v.localService);
 
             // Safari iOS doesn't support the addEventListener() method for the speechSynthesis
             if (speechSynthesis.addEventListener) {
                 speechSynthesis.addEventListener('voiceschanged', () => {
-                    voices = speechSynthesis.getVoices().filter(v => !opts.local || v.localService);
+                    voices = speechSynthesis.getVoices().filter((v) => !opts.local || v.localService);
                 });
             }
 
