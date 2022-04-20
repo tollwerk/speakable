@@ -86,7 +86,7 @@ The currently supported options are:
 [width="100%",cols="2,4,1,1,1",frame="none",options="header"]
 |=======
 |Name|Description|Default|init()|`data-*`
-|selector|CSS class to use for finding speakable elements|`"spkbl"`|Yes|—
+|selector|DOM Selector to find speakable elements.|`".spkbl"`|Yes|—
 |local|Use locally available voices only, so that no data is transferred to remote services. The progress bar can only be properly updated with local voices. Remote voices might also stop reading prematurely.|`true`|Yes|Yes
 |multivoice|Look out for `lang` attributes on contained elements and try to use the most appropriate voice available for a particular language|`true`|Yes|Yes
 |hidden|Hide the player for assistive technology (via `aria-hidden="true"`)|`false`|Yes|Yes
